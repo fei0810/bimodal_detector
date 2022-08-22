@@ -19,7 +19,7 @@ setuptools.setup(
     },
     license='MIT',
     packages=['bimodal_detector'],
-    install_requires=['numpy', 'pandas', 'scipy', 'bottleneck', "Click", "pytest"],
+    install_requires=['numpy', 'pandas', 'scipy', 'sklearn', "Click", "pytest"],
                       # f"epiread-tools @ git+https://{TOKEN_VALUE}@github.com/methylgrammarlab/epiread-tools.git"
                       # ],
     include_package_data=True,
