@@ -6,9 +6,10 @@
 ###################################################
 import sys
 sys.path.append("/Users/ireneu/PycharmProjects/epiread-tools")
+sys.path.append("/Users/ireneu/PycharmProjects/bimodal_detector")
 
-from expectation_maximization import *
-from Likelihood_and_BIC import *
+from bimodal_detector.expectation_maximization import *
+from bimodal_detector.Likelihood_and_BIC import *
 from collections import defaultdict
 from epiread_tools.naming_conventions import *
 #%%

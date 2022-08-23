@@ -13,7 +13,6 @@ import pandas as pd
 import gzip
 from sklearn.metrics.pairwise import nan_euclidean_distances
 from itertools import compress
-import matplotlib.pyplot as plt
 
 def calc_euclidean(win1, win2):
     '''

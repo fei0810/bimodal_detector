@@ -5,15 +5,14 @@
 #############################################################
 import sys
 sys.path.append("/Users/ireneu/PycharmProjects/epiread-tools")
+sys.path.append("/Users/ireneu/PycharmProjects/bimodal_detector")
 
 import numpy as np
 import pandas as pd
 import math
 from scipy.special import logsumexp
-from Likelihood_and_BIC import *
+from bimodal_detector.Likelihood_and_BIC import *
 from epiread_tools.naming_conventions import *
-# UNMETHYLATED, METHYLATED = range(2)
-SAMPLE_DATA = "sample2.csv"
 
 class two_epistate_EM:
 
@@ -204,6 +203,8 @@ class two_epistate_EM:
         return self.mu_A
 #%%
 def main():
+    SAMPLE_DATA = "sample2.csv"
+
     initial_low = 0.2
     initial_high = 0.8
     state_prior = 0.5

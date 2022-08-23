@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 from scipy.special import logsumexp
 from epiread_tools.naming_conventions import *
-# UNMETHYLATED, METHYLATED = range(2)
 
 SAMPLE_DATA = "toy_data.csv"
 
