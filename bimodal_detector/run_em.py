@@ -75,7 +75,7 @@ def get_all_stats(row_filters, pp_vectors, ind_to_source, source_list, get_pp):
     :return: sourcesXwindowsXstats matrix
     '''
     n_windows = len(pp_vectors)
-    n_sources = len(source_list)
+    n_sources = len(source_list) + 1 #add one for ALL
     n_cols = len(get_source_stats(np.zeros(1))) #length of stats
     if get_pp:
         n_cols += 1
@@ -180,7 +180,7 @@ def get_source_stats(source_probs, pp=False):
     :return: summary statistics
     '''
     stats = np.array([len(source_probs), np.sum(source_probs>upper_conf_thresh),
-             np.sum(source_probs < upper_conf_thresh),np.sum(source_probs>0.5),
+             np.sum(source_probs < lower_conf_thresh),np.sum(source_probs>0.5),
             "{:.2f}".format(np.mean(source_probs)),"{:.2f}".format(np.std(source_probs))])
     if pp:
         np.append(stats,source_probs)
