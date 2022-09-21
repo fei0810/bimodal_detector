@@ -14,22 +14,6 @@ from collections import defaultdict
 from epiread_tools.naming_conventions import *
 #%%
 
-def make_window_list(window_list, walk_on_list, window_size, step_size):
-    '''
-
-    :param window_list: list of relative intervals
-    :param walk_on_list: make walker on each interval
-    :param window_size: number of CpGs per window
-    :param step_size: distance between windows
-    :return: iterator of windows
-    '''
-
-    if walk_on_list: #make genome walker
-        windows = do_walk_on_list(window_list, window_size, step_size)
-    else: #do nothing
-        windows = window_list
-    return windows
-
 def run_em(methylation_matrix, windows):
     '''
     run expectation maximization on all windows
@@ -64,7 +48,7 @@ def run_em(methylation_matrix, windows):
 
 
 
-def get_all_stats(row_filters, pp_vectors, ind_to_source, source_list, get_pp):
+def get_all_stats(row_filters, pp_vectors, ind_to_source, n_sources, get_pp):
     '''
     get summary statistics on all eligible windows
     :param row_filters: list of arrays with indices of reads per window
@@ -75,7 +59,7 @@ def get_all_stats(row_filters, pp_vectors, ind_to_source, source_list, get_pp):
     :return: sourcesXwindowsXstats matrix
     '''
     n_windows = len(pp_vectors)
-    n_sources = len(source_list) + 1 #add one for ALL
+    n_sources = n_sources + 1 #add one for ALL
     n_cols = len(get_source_stats(np.zeros(1))) #length of stats
     if get_pp:
         n_cols += 1
@@ -83,7 +67,7 @@ def get_all_stats(row_filters, pp_vectors, ind_to_source, source_list, get_pp):
     for i in range(n_windows):
         row_filter = row_filters[i]
         probs = pp_vectors[i]
-        sec_sources = np.array([ind_to_source(ind) for ind in row_filter])
+        sec_sources = np.array([ind_to_source[ind] for ind in row_filter])
         output[ALL][i] = get_source_stats(probs, get_pp)
         for source in set(sec_sources):
             source_filter = np.where(sec_sources == source)[0]

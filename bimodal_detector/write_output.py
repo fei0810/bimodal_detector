@@ -14,10 +14,9 @@ from epiread_tools.em_utils import jsonconverter
 import gzip
 import json
 
-def write_output(name, chrom, em_results, sample_stats, snp_stats, mapper, outdir):
+def write_output(config, chrom, em_results, sample_stats):
     '''
     write all outputs to outdir
-    :param name: name for output files
     :param chrom: chromosome for intervals
     :param em_results: em results (dict)
     :param sample_stats: array of stats per sample

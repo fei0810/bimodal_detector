@@ -1,0 +1,16 @@
+{
+  "genomic_intervals": ["chr1:750000-755000","chr2:750000-755000"],
+  "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
+  "epiread_files": ["tests/data/sample_epiread_with_A.epiread.gz"],
+  "outdir": "output",
+  "epiformat": "old_epiread_A",
+  "header": false,
+  "bedfile": false,
+  "parse_snps": false,
+  "walk_on_list": true,
+  "window_size": 5,
+  "step_size": 1,
+  "logfile": "logs/log.log"
+
+
+}
