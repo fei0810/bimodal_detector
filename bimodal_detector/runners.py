@@ -1,16 +1,15 @@
 import sys
 import os
 import numpy as np
-sys.path.append("/Users/ireneu/PycharmProjects/bimodal_detector/bimodal_detector") ###
 sys.path.append("/Users/ireneu/PycharmProjects/bimodal_detector/") ###
 sys.path.append("/Users/ireneu/PycharmProjects/epiread-tools/") ###
 
 from epiread_tools.epiparser import EpireadReader, CoordsEpiread, epiformat_to_reader
 from epiread_tools.naming_conventions import *
 from epiread_tools.em_utils import calc_coverage, calc_methylated
-from run_em import run_em, get_all_stats, get_all_snp_stats, do_walk_on_list
-from filter_bic import *
-from output_utils import relative_intervals_to_abs, cpg_positions_in_interval, format_array
+from bimodal_detector.run_em import run_em, get_all_stats, get_all_snp_stats, do_walk_on_list
+from bimodal_detector.filter_bic import *
+from bimodal_detector.output_utils import relative_intervals_to_abs, cpg_positions_in_interval, format_array
 import pandas as pd
 import scipy.sparse as sp
 import json
