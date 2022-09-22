@@ -25,7 +25,7 @@ setuptools.setup(
     include_package_data=True,
     entry_points={
     "console_scripts":[
-    "runEM = bimodal_detector.main:main",
+    "runEM = bimodal_detector.runners:main",
     ]
     },
 )
