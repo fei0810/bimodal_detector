@@ -28,6 +28,7 @@ def relative_intervals_to_abs(chrom, cpgs, rel_intervals):
     rel_end -= 1 #to get index of last cpg included
     res[:,1] = cpgs[rel_start]
     res[:,2] = cpgs[rel_end] + 1
+
     return res
 
 def cpg_positions_in_interval(cpgs, rel_intervals):

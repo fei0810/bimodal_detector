@@ -83,9 +83,10 @@ class Runner:
         abs_windows = []
         rel_positions = []
         for i, interval in enumerate(self.interval_order):
-            abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
-            for x in cpg_positions_in_interval(self.cpgs[i], self.results[i]["windows"]):
-                rel_positions.append(format_array(x))
+            if self.results[i]["windows"]: #any windows with results
+                abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
+                for x in cpg_positions_in_interval(self.cpgs[i], self.results[i]["windows"]):
+                    rel_positions.append(format_array(x))
         output_array = np.hstack([np.vstack(abs_windows),
                         np.hstack([ self.results[x]["BIC"] for x in range(len(self.interval_order))]).reshape(-1,1),
                         np.vstack(rel_positions)])
@@ -100,7 +101,8 @@ class Runner:
         '''
         abs_windows = []
         for i, interval in enumerate(self.interval_order):
-            abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
+            if self.results[i]["windows"]: #any results
+                abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
         a = np.vstack(abs_windows)
         b = np.hstack(self.stats)
         output_array = np.vstack([np.hstack([a, np.full(a.shape[0], x).reshape(-1,1), b[x,:,:]]) for x in range(b.shape[0])])
@@ -148,6 +150,11 @@ class TwoStepRunner(Runner):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def run(self):
+        self.read()
+        self.em_all()
+        self.
+
 @click.command(context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
 @click.option('-j', '--json', help='run from json config file')
 @click.version_option()
@@ -170,26 +177,46 @@ def main(ctx, **kwargs):
     em_runner = runner(config)
     em_runner.run()
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
 
-# config = {"genomic_intervals": ["chr1:750000-755000","chr2:750000-755000"],
-#   "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
-#   "epiread_files": ["/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sample_epiread_with_A.epiread.gz"],
-#   "outdir": "output",
-#   "epiformat": "old_epiread_A",
-#   "header": False,
-#   "bedfile": False,
-#   "parse_snps": False,
-#     "get_pp":False,
-#   "walk_on_list": True,
-#     "verbose" : False,
-#   "window_size": 5,
-#   "step_size": 1,
-#     "name": "banana",
-#   "logfile": "log.log"}
-# runner = Runner(config)
-# runner.run()
+config = {"genomic_intervals": "/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/top_100_EM_regions.bed",
+  "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
+  "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z000000QX.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043W.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043X.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043Y.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000453.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000456.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000459.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000452.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000455.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000458.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000451.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000454.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000457.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z000000QZ.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043T.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043U.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043V.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042D.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042X.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z00000430.epiread.gz'
+                    ],
+  "outdir": "/Users/ireneu/PycharmProjects/bimodal_detector/results/",
+  "epiformat": "old_epiread_A",
+  "header": False,
+  "bedfile": True,
+  "parse_snps": False,
+    "get_pp":False,
+  "walk_on_list": False,
+    "verbose" : False,
+  "window_size": 5,
+  "step_size": 1,
+    "name": "EM_100",
+  "logfile": "log.log"}
+runner = Runner(config)
+runner.run()
 
 #TODO:
 # handle SNPS?
