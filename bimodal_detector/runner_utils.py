@@ -4,6 +4,7 @@ import numpy as np
 sys.path.append("/Users/ireneu/PycharmProjects/epiread-tools/") ###
 from epiread_tools.naming_conventions import *
 from itertools import compress
+from collections import defaultdict
 import gzip
 import json
 
@@ -50,7 +51,7 @@ def filter_list(list_to_filter, bool_filter):
     return list(compress(list_to_filter, bool_filter))
 
 def filter_em_results(em_results, list_filter, indices=False):
-    new_dict = {}
+    new_dict = defaultdict()
     for k, v in em_results.items():
         if indices:
             new_dict[k] = list(map(list(v).__getitem__, list_filter))
