@@ -9,7 +9,7 @@ from epiread_tools.naming_conventions import *
 from epiread_tools.em_utils import calc_coverage, calc_methylated
 from bimodal_detector.run_em import run_em, get_all_stats, get_all_snp_stats, do_walk_on_list
 from bimodal_detector.filter_bic import *
-from bimodal_detector.output_utils import relative_intervals_to_abs, cpg_positions_in_interval, format_array
+from bimodal_detector.runner_utils import relative_intervals_to_abs, cpg_positions_in_interval, format_array
 import pandas as pd
 import scipy.sparse as sp
 import json
@@ -124,17 +124,10 @@ class ParamEstimator(Runner):
 
     def run_parameter_estimation(self, intervals, chrom):
         pass
-        # intervals = sorted(intervals, key=lambda x: x.start)
-        # methylation_matrix, snp_matrix, mapper = parse_epireads(chrom, intervals,
-        #                                                         self.epiread_files, self.cpg_locations,self.one_based, self.parse_snps)
-        # window_list = make_window_list(mapper.get_ind_intervals(intervals), self.walk_on_list, self.win_size, self.step_size)
-        # em_results = run_em(methylation_matrix, window_list)
-        # stats = get_all_stats(em_results["Indices"], em_results["Probs"],
-        #                       mapper.index_to_source, mapper.get_sample_id_list(), False)
-        # pp_vectors = get_mean_pp_vec_from_stats(stats)
-        # win_starts = np.array([mapper.ind_to_rel(x[0]) for x in em_results["windows"]]).reshape((-1,1))
-        # win_ends = np.array([mapper.ind_to_rel(x[1]-1) + 1 for x in em_results["windows"]]).reshape((-1,1))
-        # write_minimal_output(self.name, np.hstack([win_starts, win_ends, em_results["BIC"].reshape((-1,1)), pp_vectors]),
+        # pp_vectors = get_mean_pp_vec_from_stats(self.stats)
+
+        # write_minimal_output(self.name,
+        #                      np.hstack([win_starts, win_ends, em_results["BIC"].reshape((-1, 1)), pp_vectors]),
         #                      self.outdir)
 
     def write_minimal_output(self):
@@ -150,10 +143,49 @@ class TwoStepRunner(Runner):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def is_empty(self):
+        '''
+        check if any results to output
+        :return: True if empty
+        '''
+        if len(self.results)==0:
+            return True
+        return False
+
+    def handle_empty_output(self):
+        '''
+        create empty files for snakemake
+        :return:
+        '''
+        pass
+
+    def filter(self, bic):
+        '''
+        filter results by bic
+        :param bic: threshold, keep only <=bic
+        :return:
+        '''
+        results, stats = [], []
+        for res, stat in zip(self.results, self.stats):
+            pass_filter = res["BIC"] <= bic
+            filt_res, filt_stat = {}, {}
+
+        if self.is_empty():
+            self.handle_empty_output()
+
     def run(self):
         self.read()
         self.em_all()
-        self.
+        #check if empty
+        print("hi")
+        #loose filter
+        #check if empty
+        #merge
+        #rerun em
+        #unmerge
+        #strict filter
+        #check if empty
+        #write output
 
 @click.command(context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
 @click.option('-j', '--json', help='run from json config file')
@@ -177,48 +209,48 @@ def main(ctx, **kwargs):
     em_runner = runner(config)
     em_runner.run()
 
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()
 
-config = {"genomic_intervals": "/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/top_100_EM_regions.bed",
-  "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
-  "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z000000QX.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043W.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043X.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043Y.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000453.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000456.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000459.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000452.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000455.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000458.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000451.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000454.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000457.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z000000QZ.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043T.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043U.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043V.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042D.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042X.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z00000430.epiread.gz'
-                    ],
-  "outdir": "/Users/ireneu/PycharmProjects/bimodal_detector/results/",
-  "epiformat": "old_epiread_A",
-  "header": False,
-  "bedfile": True,
-  "parse_snps": False,
-    "get_pp":False,
-  "walk_on_list": False,
-    "verbose" : False,
-  "window_size": 5,
-  "step_size": 1,
-    "name": "EM_100",
-  "logfile": "log.log"}
-runner = Runner(config)
-runner.run()
-
-#TODO:
+# config = {"genomic_intervals": "/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/top_100_EM_regions.bed",
+#   "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
+#   "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z000000QX.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043W.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043X.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043Y.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000453.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000456.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000459.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000452.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000455.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000458.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000451.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000454.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000457.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z000000QZ.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043T.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043U.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043V.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042D.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042X.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z00000430.epiread.gz'
+#                     ],
+#   "outdir": "/Users/ireneu/PycharmProjects/bimodal_detector/results/",
+#   "epiformat": "old_epiread_A",
+#   "header": False,
+#   "bedfile": True,
+#   "parse_snps": False,
+#     "get_pp":False,
+#   "walk_on_list": False,
+#     "verbose" : False,
+#   "window_size": 5,
+#   "step_size": 1,
+#     "name": "EM_100",
+#   "logfile": "log.log"}
+# runner = TwoStepRunner(config)
+# runner.run()
+#
+# #TODO:
 # handle SNPS?
 # add get PP option
 # implement two-step
