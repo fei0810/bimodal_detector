@@ -71,10 +71,11 @@ class Runner:
         for res, stat in zip(self.results, self.stats):
             pass_filt = res["BIC"] <  bic
             filt_res = filter_em_results(res, pass_filt)
+            filt_stats = []
             if filt_res["BIC"]: #anything left
                 filt_stats = stat[:,pass_filt,:]
-                results.append(filt_res)
-                stats.append(filt_stats)
+            results.append(filt_res)
+            stats.append(filt_stats)
         self.results, self.stats = results, stats
 
     def write_sample_ids(self):
@@ -104,7 +105,7 @@ class Runner:
                 for x in cpg_positions_in_interval(self.cpgs[i], self.results[i]["windows"]):
                     rel_positions.append(format_array(x))
         output_array = np.hstack([np.vstack(abs_windows),
-                        np.hstack([ self.results[x]["BIC"] for x in range(len(self.interval_order))]).reshape(-1,1),
+                        np.hstack([self.results[x]["BIC"] for x in range(len(self.interval_order))]).reshape(-1,1),
                         np.vstack(rel_positions)])
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_window_summary.bedgraph.gz"), "a") as outfile:
             np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
@@ -179,7 +180,6 @@ class TwoStepRunner(Runner):
         self.read()
         self.em_all()
         #check if empty
-        print("hi")
         #loose filter
         #check if empty
         #merge
@@ -243,10 +243,10 @@ if __name__ == '__main__':
 #   "bedfile": True,
 #   "parse_snps": False,
 #     "get_pp":False,
-#   "walk_on_list": False,
+#   "walk_on_list": True,
 #     "verbose" : False,
-#   "window_size": 5,
-#   "step_size": 1,
+#   "window_size": 3,
+#   "step_size": 2,
 #           "bic_threshold":0,
 #     "name": "EM_100",
 #   "logfile": "log.log"}
