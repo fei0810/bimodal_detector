@@ -129,7 +129,6 @@ class Runner:
         self.read()
         self.em_all()
         self.filter(self.config["bic_threshold"])
-        self.write_sample_ids()
         self.write_window_summary()
         self.write_sample_summary()
 
