@@ -3,6 +3,7 @@ import sys
 import numpy as np
 sys.path.append("/Users/ireneu/PycharmProjects/epiread-tools/") ###
 from epiread_tools.naming_conventions import *
+from itertools import compress
 import gzip
 import json
 
@@ -45,3 +46,14 @@ def cpg_positions_in_interval(cpgs, rel_intervals):
         res.append(positions)
     return res
 
+def filter_list(list_to_filter, bool_filter):
+    return list(compress(list_to_filter, bool_filter))
+
+def filter_em_results(em_results, list_filter, indices=False):
+    new_dict = {}
+    for k, v in em_results.items():
+        if indices:
+            new_dict[k] = list(map(list(v).__getitem__, list_filter))
+        else:
+            new_dict[k] = filter_list(v, list_filter)
+    return new_dict

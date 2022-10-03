@@ -9,7 +9,7 @@ from epiread_tools.naming_conventions import *
 from epiread_tools.em_utils import calc_coverage, calc_methylated
 from bimodal_detector.run_em import run_em, get_all_stats, get_all_snp_stats, do_walk_on_list
 from bimodal_detector.filter_bic import *
-from bimodal_detector.runner_utils import relative_intervals_to_abs, cpg_positions_in_interval, format_array
+from bimodal_detector.runner_utils import *
 import pandas as pd
 import scipy.sparse as sp
 import json
@@ -60,6 +60,22 @@ class Runner:
                                   len(self.config["epiread_files"]), self.config["get_pp"])
             self.results.append(em_results)
             self.stats.append(stats)
+
+    def filter(self, bic):
+        '''
+        filter results by bic
+        :param bic: threshold, keep only < bic
+        :return:
+        '''
+        results, stats = [], []
+        for res, stat in zip(self.results, self.stats):
+            pass_filt = res["BIC"] <  bic
+            filt_res = filter_em_results(res, pass_filt)
+            if filt_res["BIC"]: #anything left
+                filt_stats = stat[:,pass_filt,:]
+                results.append(filt_res)
+                stats.append(filt_stats)
+        self.results, self.stats = results, stats
 
     def write_sample_ids(self):
         '''
@@ -112,6 +128,7 @@ class Runner:
     def run(self):
         self.read()
         self.em_all()
+        self.filter(self.config["bic_threshold"])
         self.write_sample_ids()
         self.write_window_summary()
         self.write_sample_summary()
@@ -158,20 +175,6 @@ class TwoStepRunner(Runner):
         :return:
         '''
         pass
-
-    def filter(self, bic):
-        '''
-        filter results by bic
-        :param bic: threshold, keep only <=bic
-        :return:
-        '''
-        results, stats = [], []
-        for res, stat in zip(self.results, self.stats):
-            pass_filter = res["BIC"] <= bic
-            filt_res, filt_stat = {}, {}
-
-        if self.is_empty():
-            self.handle_empty_output()
 
     def run(self):
         self.read()
@@ -245,11 +248,12 @@ if __name__ == '__main__':
 #     "verbose" : False,
 #   "window_size": 5,
 #   "step_size": 1,
+#           "bic_threshold":0,
 #     "name": "EM_100",
 #   "logfile": "log.log"}
-# runner = TwoStepRunner(config)
+# runner = Runner(config)
 # runner.run()
-#
+
 # #TODO:
 # handle SNPS?
 # add get PP option
