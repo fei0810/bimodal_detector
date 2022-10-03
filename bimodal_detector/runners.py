@@ -107,7 +107,7 @@ class Runner:
         output_array = np.hstack([np.vstack(abs_windows),
                         np.hstack([self.results[x]["BIC"] for x in range(len(self.interval_order))]).reshape(-1,1),
                         np.vstack(rel_positions)])
-        with gzip.open(os.path.join(self.outdir, str(self.name) + "_window_summary.bedgraph.gz"), "a") as outfile:
+        with gzip.open(os.path.join(self.outdir, str(self.name) + "_window_summary.bedgraph.gz"), "w") as outfile:
             np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
 
     def write_sample_summary(self): #TODO
@@ -123,7 +123,7 @@ class Runner:
         a = np.vstack(abs_windows)
         b = np.hstack(self.stats)
         output_array = np.vstack([np.hstack([a, np.full(a.shape[0], x).reshape(-1,1), b[x,:,:]]) for x in range(b.shape[0])])
-        with gzip.open(os.path.join(self.outdir, str(self.name) + "_sample_summary.bed.gz"), "a") as outfile:
+        with gzip.open(os.path.join(self.outdir, str(self.name) + "_sample_summary.bed.gz"), "w") as outfile:
             np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
 
     def run(self):
