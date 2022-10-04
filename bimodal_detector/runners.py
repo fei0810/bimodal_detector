@@ -103,11 +103,11 @@ class Runner:
         for i, interval in enumerate(self.interval_order):
             if "windows" in self.results[i] and self.results[i]["windows"]: #any windows with results
                 abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
-                bic.append(self.results[i]["BIC"])
+                bic.append(np.array(self.results[i]["BIC"]))
                 for x in cpg_positions_in_interval(self.cpgs[i], self.results[i]["windows"]):
                     rel_positions.append(format_array(x))
         output_array = np.hstack([np.vstack(abs_windows),
-                        np.vstack([bic]).reshape(-1,1),
+                        np.hstack(bic).reshape(-1,1),
                         np.vstack(rel_positions)])
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_window_summary.bedgraph.gz"), "w") as outfile:
             np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
@@ -213,7 +213,7 @@ def main(ctx, **kwargs):
 if __name__ == '__main__':
     main()
 
-# config = {"genomic_intervals": ["chr9:67656711-67685875"],
+# config = {"genomic_intervals": ['chr11:85403536-85424841', 'chr11:85426656-85447945'],
 #   "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
 #   "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Acinar-Z000000QX.epiread.gz',
 # '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Acinar-Z0000043W.epiread.gz',
