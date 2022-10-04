@@ -58,3 +58,6 @@ def filter_em_results(em_results, list_filter, indices=False):
         else:
             new_dict[k] = filter_list(v, list_filter)
     return new_dict
+
+def is_empty(stats):
+    return all(map(is_empty,stats)) if isinstance(stats, list) else False

@@ -126,10 +126,23 @@ class Runner:
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_sample_summary.bed.gz"), "w") as outfile:
             np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
 
+    def handle_empty_output(self):
+        '''
+        create empty files for snakemake
+        :return:
+        '''
+        with gzip.open(os.path.join(self.outdir, str(self.name) + "_window_summary.bedgraph.gz"), "w") as outfile:
+            pass
+        with gzip.open(os.path.join(self.outdir, str(self.name) + "_sample_summary.bed.gz"), "w") as outfile:
+            pass
+
     def run(self):
         self.read()
         self.em_all()
         self.filter(self.config["bic_threshold"])
+        if is_empty(self.stats):
+            self.handle_empty_output()
+            return
         self.write_window_summary()
         self.write_sample_summary()
 
@@ -159,22 +172,6 @@ class TwoStepRunner(Runner):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    def is_empty(self):
-        '''
-        check if any results to output
-        :return: True if empty
-        '''
-        if len(self.results)==0:
-            return True
-        return False
-
-    def handle_empty_output(self):
-        '''
-        create empty files for snakemake
-        :return:
-        '''
-        pass
 
     def run(self):
         self.read()
@@ -214,39 +211,39 @@ def main(ctx, **kwargs):
 if __name__ == '__main__':
     main()
 
-# config = {"genomic_intervals": "/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/top_100_EM_regions.bed",
+# config = {"genomic_intervals": ["chr16:32308522-32343628"],
 #   "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
-#   "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z000000QX.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043W.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043X.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043Y.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000453.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000456.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000459.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000452.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000455.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000458.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000451.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000454.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000457.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z000000QZ.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043T.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043U.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043V.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042D.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042X.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z00000430.epiread.gz'
+#   "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Acinar-Z000000QX.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Acinar-Z0000043W.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Acinar-Z0000043X.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Acinar-Z0000043Y.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Alpha-Z00000453.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Alpha-Z00000456.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Alpha-Z00000459.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Beta-Z00000452.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Beta-Z00000455.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Beta-Z00000458.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Delta-Z00000451.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Delta-Z00000454.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Delta-Z00000457.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Duct-Z000000QZ.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Duct-Z0000043T.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Duct-Z0000043U.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Duct-Z0000043V.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Endothel-Z0000042D.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Endothel-Z0000042X.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Endothel-Z00000430.epiread.gz'
 #                     ],
 #   "outdir": "/Users/ireneu/PycharmProjects/bimodal_detector/results/",
 #   "epiformat": "old_epiread_A",
 #   "header": False,
-#   "bedfile": True,
+#   "bedfile": False,
 #   "parse_snps": False,
 #     "get_pp":False,
 #   "walk_on_list": True,
 #     "verbose" : False,
-#   "window_size": 3,
-#   "step_size": 2,
+#   "window_size": 5,
+#   "step_size": 1,
 #           "bic_threshold":0,
 #     "name": "EM_100",
 #   "logfile": "log.log"}
