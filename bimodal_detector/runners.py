@@ -99,13 +99,15 @@ class Runner:
         '''
         abs_windows = []
         rel_positions = []
+        bic = []
         for i, interval in enumerate(self.interval_order):
-            if self.results[i]["windows"]: #any windows with results
+            if "windows" in self.results[i] and self.results[i]["windows"]: #any windows with results
                 abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
+                bic.append(self.results[i]["BIC"])
                 for x in cpg_positions_in_interval(self.cpgs[i], self.results[i]["windows"]):
                     rel_positions.append(format_array(x))
         output_array = np.hstack([np.vstack(abs_windows),
-                        np.hstack([self.results[x]["BIC"] for x in range(len(self.interval_order))]).reshape(-1,1),
+                        np.hstack([bic]).reshape(-1,1),
                         np.vstack(rel_positions)])
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_window_summary.bedgraph.gz"), "w") as outfile:
             np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
@@ -118,7 +120,7 @@ class Runner:
         '''
         abs_windows = []
         for i, interval in enumerate(self.interval_order):
-            if self.results[i]["windows"]: #any results
+            if "windows" in self.results[i] and self.results[i]["windows"]: #any results
                 abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
         a = np.vstack(abs_windows)
         b = np.hstack(self.stats)
