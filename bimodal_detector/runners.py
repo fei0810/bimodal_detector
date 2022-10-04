@@ -107,7 +107,7 @@ class Runner:
                 for x in cpg_positions_in_interval(self.cpgs[i], self.results[i]["windows"]):
                     rel_positions.append(format_array(x))
         output_array = np.hstack([np.vstack(abs_windows),
-                        np.hstack([bic]).reshape(-1,1),
+                        np.vstack([bic]).reshape(-1,1),
                         np.vstack(rel_positions)])
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_window_summary.bedgraph.gz"), "w") as outfile:
             np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
