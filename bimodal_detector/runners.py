@@ -211,7 +211,7 @@ def main(ctx, **kwargs):
 if __name__ == '__main__':
     main()
 
-# config = {"genomic_intervals": ["chr16:32308522-32343628"],
+# config = {"genomic_intervals": ["chr9:67656711-67685875"],
 #   "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
 #   "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Acinar-Z000000QX.epiread.gz',
 # '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Acinar-Z0000043W.epiread.gz',
@@ -245,7 +245,7 @@ if __name__ == '__main__':
 #   "window_size": 5,
 #   "step_size": 1,
 #           "bic_threshold":0,
-#     "name": "EM_100",
+#     "name": "testing",
 #   "logfile": "log.log"}
 # runner = Runner(config)
 # runner.run()
