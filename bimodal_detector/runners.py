@@ -119,11 +119,13 @@ class Runner:
         :return:
         '''
         abs_windows = []
+        stats = []
         for i, interval in enumerate(self.interval_order):
             if "windows" in self.results[i] and self.results[i]["windows"]: #any results
                 abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
+                stats.append(self.stats[i])
         a = np.vstack(abs_windows)
-        b = np.hstack(self.stats)
+        b = np.hstack(stats)
         output_array = np.vstack([np.hstack([a, np.full(a.shape[0], x).reshape(-1,1), b[x,:,:]]) for x in range(b.shape[0])])
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_sample_summary.bed.gz"), "w") as outfile:
             np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
