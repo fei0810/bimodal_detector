@@ -197,8 +197,8 @@ class AtlasEstimator(Runner):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.labels = self.config["labels"] #one for every epiread
-        self.label_set = list(set(self.labels))
-        self.label_to_id = dict(zip(self.label_set, np.arange(1,len(self.label_set)+1)))
+        self.cell_types = self.config["cell_types"] #important to maintain order in output
+        self.label_to_id = dict(zip(self.cell_types, np.arange(1, len(self.cell_types) + 1)))
         self.lambdas=[]
 
     def save_lambda(self):
@@ -211,7 +211,7 @@ class AtlasEstimator(Runner):
         output_array = np.hstack([np.vstack(abs_windows),
                                   np.vstack(mean_pp).reshape(1,-1),
                                   ])
-        header = TAB.join(self.label_set)
+        header = TAB.join(self.cell_types)
         with open(os.path.join(self.outdir, str(self.name) + "_lambdas.bedgraph"), "w") as outfile:
             np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s', header='chrom\tstart\tend\t'+header)
 
@@ -229,7 +229,7 @@ class AtlasEstimator(Runner):
             source_labels = np.array(self.labels)[self.sources[i]-1] #adjusted for index
             source_ids = [self.label_to_id[x] for x in source_labels]
             stats = get_all_stats(em_results["Indices"], em_results["Probs"], dict(zip(np.arange(len(self.sources[i])), source_ids)),
-                                  len(self.label_set), self.config["get_pp"])
+                                  len(self.cell_types), self.config["get_pp"])
             # row_filters, pp_vectors, ind_to_source, n_sources, get_pp
             self.results.append(em_results)
             self.lambdas.append(stats[1:,:,4])#remove ALL and keep only mean pp column
@@ -311,6 +311,7 @@ if __name__ == '__main__':
 #                     ],
 # "labels":["Acinar","Acinar","Acinar","Acinar","Alpha","Alpha","Alpha","Beta","Beta","Beta","Delta","Delta","Delta",
 #           "Duct","Duct","Duct","Duct","Endothel","Endothel","Endothel"],
+# "cell_types" : ["Acinar","Alpha", "Beta", "Delta", "Duct", "Endothel"],
 #   "outdir": "/Users/ireneu/PycharmProjects/bimodal_detector/results/",
 #   "epiformat": "old_epiread_A",
 #   "header": False,
