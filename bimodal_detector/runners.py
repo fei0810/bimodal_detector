@@ -209,7 +209,7 @@ class AtlasEstimator(Runner):
                 abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
                 mean_pp.append(self.lambdas[i])
         output_array = np.hstack([np.vstack(abs_windows),
-                                  np.vstack(mean_pp).reshape(1,-1),
+                                  np.hstack(mean_pp).T,
                                   ])
         header = TAB.join(self.cell_types)
         with open(os.path.join(self.outdir, str(self.name) + "_lambdas.bedgraph"), "w") as outfile:
@@ -286,7 +286,7 @@ def main(ctx, **kwargs):
 if __name__ == '__main__':
     main()
 
-# config = {"genomic_intervals": ['chr10:114851815-114852264'],
+# config = {"genomic_intervals": ['chr10:114851815-114852264', 'chr10:114852015-114852264'],
 #   "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
 #   "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Acinar-Z000000QX.epiread.gz',
 # '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Acinar-Z0000043W.epiread.gz',
