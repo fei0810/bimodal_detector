@@ -190,6 +190,75 @@ class TwoStepRunner(Runner):
         #check if empty
         #write output
 
+class AtlasEstimator(Runner):
+    '''
+    class to estimate lambda and theta from ref samples
+    '''
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.labels = self.config["labels"] #one for every epiread
+        self.label_set = list(set(self.labels))
+        self.label_to_id = dict(zip(self.label_set, np.arange(1,len(self.label_set)+1)))
+        self.lambdas=[]
+
+    def save_lambda(self):
+        abs_windows = []
+        mean_pp = []
+        for i, interval in enumerate(self.interval_order):
+            if "windows" in self.results[i] and self.results[i]["windows"]:  # any windows with results
+                abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
+                mean_pp.append(self.lambdas[i])
+        output_array = np.hstack([np.vstack(abs_windows),
+                                  np.vstack(mean_pp).reshape(1,-1),
+                                  ])
+        header = TAB.join(self.label_set)
+        with open(os.path.join(self.outdir, str(self.name) + "_lambdas.bedgraph"), "w") as outfile:
+            np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s', header='chrom\tstart\tend\t'+header)
+
+    def em_all(self):
+        '''
+        get stats per source instead of per sample
+        only keep mean pp
+        :return:
+        '''
+        for i, interval in enumerate(self.interval_order): #interval should never span more than 1 chromosome
+            window_list = [(0, self.matrices[i].shape[1])]
+            if self.config["walk_on_list"]:
+                window_list = list(do_walk_on_list(window_list, self.config["window_size"], self.config["step_size"]))
+            em_results = run_em(self.matrices[i], window_list)
+            source_labels = np.array(self.labels)[self.sources[i]-1] #adjusted for index
+            source_ids = [self.label_to_id[x] for x in source_labels]
+            stats = get_all_stats(em_results["Indices"], em_results["Probs"], dict(zip(np.arange(len(self.sources[i])), source_ids)),
+                                  len(self.label_set), self.config["get_pp"])
+            # row_filters, pp_vectors, ind_to_source, n_sources, get_pp
+            self.results.append(em_results)
+            self.lambdas.append(stats[1:,:,4])#remove ALL and keep only mean pp column
+
+
+    def save_thetas(self):
+        abs_windows = []
+        theta_A = []
+        theta_B = []
+        for i, interval in enumerate(self.interval_order):
+            if "windows" in self.results[i] and self.results[i]["windows"]:  # any windows with results
+                abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
+                thetas = zip(self.results[i]["Theta_A"], self.results[i]["Theta_B"])
+                for m, n in thetas:
+                    theta_A.append(format_array(m))
+                    theta_B.append(format_array(n))
+        output_array = np.hstack([np.vstack(abs_windows),
+                                  np.vstack(theta_A),
+                                  np.vstack(theta_B)
+                                  ])
+        with open(os.path.join(self.outdir, str(self.name) + "_thetas.bedgraph"), "w") as outfile:
+            np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
+
+    def run(self):
+        self.read()
+        self.em_all()
+        self.save_lambda()
+        self.save_thetas()
+
 @click.command(context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
 @click.option('-j', '--json', help='run from json config file')
 @click.version_option()
@@ -207,6 +276,8 @@ def main(ctx, **kwargs):
         runner=ParamEstimator
     elif config["run_type"]=='two-step':
         runner=TwoStepRunner
+    elif config["run_type"]=="atlas_estimation":
+        runner=AtlasEstimator
 
 
     em_runner = runner(config)
@@ -215,7 +286,7 @@ def main(ctx, **kwargs):
 if __name__ == '__main__':
     main()
 
-# config = {"genomic_intervals": ['chr11:85403536-85424841', 'chr11:85426656-85447945'],
+# config = {"genomic_intervals": ['chr10:114851815-114852264'],
 #   "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
 #   "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Acinar-Z000000QX.epiread.gz',
 # '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Acinar-Z0000043W.epiread.gz',
@@ -238,20 +309,22 @@ if __name__ == '__main__':
 # '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Endothel-Z0000042X.epiread.gz',
 # '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Endothel-Z00000430.epiread.gz'
 #                     ],
+# "labels":["Acinar","Acinar","Acinar","Acinar","Alpha","Alpha","Alpha","Beta","Beta","Beta","Delta","Delta","Delta",
+#           "Duct","Duct","Duct","Duct","Endothel","Endothel","Endothel"],
 #   "outdir": "/Users/ireneu/PycharmProjects/bimodal_detector/results/",
 #   "epiformat": "old_epiread_A",
 #   "header": False,
 #   "bedfile": False,
 #   "parse_snps": False,
 #     "get_pp":False,
-#   "walk_on_list": True,
+#   "walk_on_list": False,
 #     "verbose" : False,
 #   "window_size": 5,
 #   "step_size": 1,
-#           "bic_threshold":0,
+#           "bic_threshold":np.inf,
 #     "name": "testing",
 #   "logfile": "log.log"}
-# runner = Runner(config)
+# runner = AtlasEstimator(config)
 # runner.run()
 
 # #TODO:
