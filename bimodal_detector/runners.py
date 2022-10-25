@@ -254,13 +254,18 @@ class AtlasEstimator(Runner):
                 self.lambdas.append([])
                 continue
             em_results = run_em(self.matrices[i], window_list)
-            source_labels = np.array(self.labels)[self.sources[i]-1] #adjusted for index
-            source_ids = [self.label_to_id[x] for x in source_labels]
-            stats = get_all_stats(em_results["Indices"], em_results["Probs"], dict(zip(np.arange(len(self.sources[i])), source_ids)),
-                                  len(self.cell_types), self.config["get_pp"])
-            # row_filters, pp_vectors, ind_to_source, n_sources, get_pp
-            self.results.append(em_results)
-            self.lambdas.append(stats[1:,:,4])#remove ALL and keep only mean pp column
+            try:
+                source_labels = np.array(self.labels)[self.sources[i]-1] #adjusted for index
+                source_ids = [self.label_to_id[x] for x in source_labels]
+                stats = get_all_stats(em_results["Indices"], em_results["Probs"], dict(zip(np.arange(len(self.sources[i])), source_ids)),
+                                      len(self.cell_types), self.config["get_pp"])
+                # row_filters, pp_vectors, ind_to_source, n_sources, get_pp
+                self.results.append(em_results)
+                self.lambdas.append(stats[1:,:,4])#remove ALL and keep only mean pp column
+            except:
+                print(i)
+                print(self.sources[i])
+                print("here")
 
 
     def save_thetas(self):
