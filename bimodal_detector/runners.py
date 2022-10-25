@@ -249,8 +249,11 @@ class AtlasEstimator(Runner):
             window_list = [(0, self.matrices[i].shape[1])]
             if self.config["walk_on_list"]:
                 window_list = list(do_walk_on_list(window_list, self.config["window_size"], self.config["step_size"]))
+            if self.matrices[i].count_nonzero == 0: #no data
+                self.results.append([])
+                self.lambdas.append([])
+                pass
             em_results = run_em(self.matrices[i], window_list)
-            print(self.sources)
             source_labels = np.array(self.labels)[self.sources[i]-1] #adjusted for index
             source_ids = [self.label_to_id[x] for x in source_labels]
             stats = get_all_stats(em_results["Indices"], em_results["Probs"], dict(zip(np.arange(len(self.sources[i])), source_ids)),
