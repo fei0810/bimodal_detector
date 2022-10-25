@@ -265,6 +265,8 @@ class AtlasEstimator(Runner):
             except:
                 print(i)
                 print(self.sources[i])
+                print(self.matrices[i].count_nonzero)
+                print(self.matrices[i])
                 print("here")
 
 
