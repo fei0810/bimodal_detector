@@ -252,7 +252,7 @@ class AtlasEstimator(Runner):
             if self.matrices[i].count_nonzero == 0: #no data
                 self.results.append([])
                 self.lambdas.append([])
-                pass
+                continue
             em_results = run_em(self.matrices[i], window_list)
             source_labels = np.array(self.labels)[self.sources[i]-1] #adjusted for index
             source_ids = [self.label_to_id[x] for x in source_labels]
