@@ -10,6 +10,7 @@ sys.path.append("/Users/ireneu/PycharmProjects/bimodal_detector")
 
 from bimodal_detector.expectation_maximization import *
 from bimodal_detector.Likelihood_and_BIC import *
+from bimodal_detector.runner_utils import format_array
 from collections import defaultdict
 from epiread_tools.naming_conventions import *
 #%%
@@ -60,19 +61,25 @@ def get_all_stats(row_filters, pp_vectors, ind_to_source, n_sources, get_pp):
     '''
     n_windows = len(pp_vectors)
     n_sources = n_sources + 1 #add one for ALL
-    n_cols = len(get_source_stats(np.zeros(1))) #length of stats
-    if get_pp:
-        n_cols += 1
+    n_cols = len(get_source_stats(np.zeros(1)))#length of stats
     output = np.full(fill_value=np.nan, shape=(n_sources, n_windows, n_cols))
+    if get_pp:
+        all_pp = np.full(fill_value=np.nan, shape=(n_sources, n_windows, 1), dtype=object)
     for i in range(n_windows):
         row_filter = row_filters[i]
         probs = pp_vectors[i]
         sec_sources = np.array([ind_to_source[ind] for ind in row_filter])
-        output[ALL][i] = get_source_stats(probs, get_pp)
+        output[ALL][i] = get_source_stats(probs)
+        if get_pp:
+            all_pp[ALL][i] = format_array(probs)
         for source in set(sec_sources):
             source_filter = np.where(sec_sources == source)[0]
             source_probs = probs[source_filter]
-            output[source, i] = get_source_stats(source_probs, get_pp)
+            output[source][i] = get_source_stats(source_probs)
+            if get_pp:
+                all_pp[source][i] = format_array(source_probs)
+    if get_pp:
+        output = np.concatenate([output, all_pp], axis=2)
     return output
 
 def get_all_snp_stats(snp_matrix, row_filters, pp_vectors, ind_to_source, get_pp):
@@ -156,7 +163,7 @@ def make_genome_walker(window_size, step_size,min_win, max_win):
         if i+window_size <= max_win:
             yield i, i+window_size
 
-def get_source_stats(source_probs, pp=False):
+def get_source_stats(source_probs):
     '''
     summarize probs
     :param source_probs: np array of posterior probabilities
@@ -166,8 +173,7 @@ def get_source_stats(source_probs, pp=False):
     stats = np.array([len(source_probs), np.sum(source_probs>upper_conf_thresh),
              np.sum(source_probs < lower_conf_thresh),np.sum(source_probs>0.5),
             "{:.2f}".format(np.mean(source_probs)),"{:.2f}".format(np.std(source_probs))])
-    if pp:
-        np.append(stats,source_probs)
+
     return stats
 
 

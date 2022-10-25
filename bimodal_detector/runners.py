@@ -226,6 +226,7 @@ class AtlasEstimator(Runner):
             if self.config["walk_on_list"]:
                 window_list = list(do_walk_on_list(window_list, self.config["window_size"], self.config["step_size"]))
             em_results = run_em(self.matrices[i], window_list)
+            print(self.sources)
             source_labels = np.array(self.labels)[self.sources[i]-1] #adjusted for index
             source_ids = [self.label_to_id[x] for x in source_labels]
             stats = get_all_stats(em_results["Indices"], em_results["Probs"], dict(zip(np.arange(len(self.sources[i])), source_ids)),
@@ -286,7 +287,7 @@ def main(ctx, **kwargs):
 if __name__ == '__main__':
     main()
 
-# config = {"genomic_intervals": ['chr10:114851815-114852264', 'chr10:114852015-114852264'],
+# config = {"genomic_intervals": ['chr14:85843683-85844197'],
 #   "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
 #   "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Acinar-Z000000QX.epiread.gz',
 # '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/Pancreas-Acinar-Z0000043W.epiread.gz',
@@ -325,7 +326,7 @@ if __name__ == '__main__':
 #           "bic_threshold":np.inf,
 #     "name": "testing",
 #   "logfile": "log.log"}
-# runner = AtlasEstimator(config)
+# runner = Runner(config)
 # runner.run()
 
 # #TODO:
