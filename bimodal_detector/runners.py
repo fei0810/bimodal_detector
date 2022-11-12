@@ -226,18 +226,21 @@ class AtlasEstimator(Runner):
         self.lambdas=[]
 
     def save_lambda(self):
+        input_windows = [] #for comparisons later
         abs_windows = []
         mean_pp = []
         for i, interval in enumerate(self.interval_order):
             if "windows" in self.results[i] and self.results[i]["windows"]:  # any windows with results
                 abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
                 mean_pp.append(self.lambdas[i])
-        output_array = np.hstack([np.vstack(abs_windows),
+                input_windows.append([(interval.chrom, interval.start, interval.end)]*len(self.results[i]["windows"]))
+        output_array = np.hstack([np.vstack(input_windows),
+                                  np.vstack(abs_windows),
                                   np.hstack(mean_pp).T,
                                   ])
         header = TAB.join(self.cell_types)
         with open(os.path.join(self.outdir, str(self.name) + "_lambdas.bedgraph"), "w") as outfile:
-            np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s', header='chrom\tstart\tend\t'+header)
+            np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s', header='chrom\tstart\tend\tchrom\tstart\tend\t'+header)
 
     def em_all(self):
         '''
@@ -265,17 +268,20 @@ class AtlasEstimator(Runner):
 
 
     def save_thetas(self):
+        input_windows = []
         abs_windows = []
         theta_A = []
         theta_B = []
         for i, interval in enumerate(self.interval_order):
             if "windows" in self.results[i] and self.results[i]["windows"]:  # any windows with results
                 abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
+                input_windows.append([(interval.chrom, interval.start, interval.end)]*len(self.results[i]["windows"]))
                 thetas = zip(self.results[i]["Theta_A"], self.results[i]["Theta_B"])
                 for m, n in thetas:
                     theta_A.append(format_array(m))
                     theta_B.append(format_array(n))
-        output_array = np.hstack([np.vstack(abs_windows),
+        output_array = np.hstack([np.vstack(input_windows),
+                                  np.vstack(abs_windows),
                                   np.vstack(theta_A),
                                   np.vstack(theta_B)
                                   ])
@@ -347,14 +353,14 @@ if __name__ == '__main__':
 #   "bedfile": False,
 #   "parse_snps": False,
 #     "get_pp":False,
-#   "walk_on_list": False,
+#   "walk_on_list": True,
 #     "verbose" : False,
-#   "window_size": 5,
+#   "window_size": 2,
 #   "step_size": 1,
 #           "bic_threshold":np.inf,
 #     "name": "testing",
 #   "logfile": "log.log"}
-# runner = Runner(config)
+# runner = AtlasEstimator(config)
 # runner.run()
 
 # #TODO:
