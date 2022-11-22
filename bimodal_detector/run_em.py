@@ -59,8 +59,10 @@ def run_em(methylation_matrix, windows):
             continue
         BIC, thetas, probs = run_em_on_window(section.shape[1], section.shape[0],
                                                       section, initial_high, initial_low)
+        med_cpg = np.nanmedian(np.nansum((section==METHYLATED)|(section==UNMETHYLATED), axis=1))
         output["windows"].append((start,stop))
         output["BIC"].append(BIC)
+        output["median_cpg"].append(med_cpg)
         output["Theta_A"].append(thetas[0])
         output["Theta_B"].append(thetas[1])
         output["Probs"].append(probs)

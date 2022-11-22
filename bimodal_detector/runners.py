@@ -116,27 +116,31 @@ class Runner:
     def write_window_summary(self): #TODO: add snps
         '''
             one line per window:
-        chr start end BIC CpG_rel_pos SNP_rel_pos SNP_alt_alleles
-        chr2 100 125 -1250 0,20,34,88,125 56,61    A,T
+        chr start end BIC med_cpg CpG_rel_pos SNP_rel_pos SNP_alt_alleles
+        chr2 100 125 -1250   4    0,20,34,88,125 56,61    A,T
         :param self:
         :return:
         '''
         abs_windows = []
         rel_positions = []
         bic = []
+        med_cpg = []
         for i, interval in enumerate(self.interval_order):
             if "windows" in self.results[i] and self.results[i]["windows"]: #any windows with results
                 abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
                 bic.append(np.array(self.results[i]["BIC"]))
+                med_cpg.append(np.array(self.results[i]["median_cpg"]))
+
                 for x in cpg_positions_in_interval(self.cpgs[i], self.results[i]["windows"]):
                     rel_positions.append(format_array(x))
         output_array = np.hstack([np.vstack(abs_windows),
                         np.hstack(bic).reshape(-1,1),
+                        np.hstack(med_cpg).reshape(-1, 1),
                         np.vstack(rel_positions)])
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_window_summary.bedgraph.gz"), "w") as outfile:
             np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
 
-    def write_sample_summary(self): #TODO
+    def write_sample_summary(self):
         '''
         chr start end sample n_read n>0.9, n<0.1, n>0.5, pp_mean, pp_stdev, pps(optional)
         chr2 100  125  0     54      18     20      19      0.2      0.01    0.8,0.1,0.4
