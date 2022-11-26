@@ -161,7 +161,7 @@ class Runner:
         a = np.vstack(abs_windows)
         b = np.hstack(stats)
         c = np.vstack(input_windows)
-        output_array = np.vstack([np.hstack([a,c, np.full(a.shape[0], x).reshape(-1,1), b[x,:,:]]) for x in range(b.shape[0])])
+        output_array = np.vstack([np.hstack([c,a, np.full(a.shape[0], x).reshape(-1,1), b[x,:,:]]) for x in range(b.shape[0])])
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_sample_summary.bed.gz"), "w") as outfile:
             np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
 
