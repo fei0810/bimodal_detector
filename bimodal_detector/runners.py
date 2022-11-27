@@ -71,7 +71,7 @@ class Runner:
 
     def read(self):
         reader = self.reader(self.config)
-        self.interval_order, self.matrices, self.cpgs = reader.get_matrices_for_intervals()
+        self.interval_order, self.matrices, self.cpgs, self.origins = reader.get_matrices_for_intervals()
         self.sources = reader.get_sources()
 
     def em_all(self):

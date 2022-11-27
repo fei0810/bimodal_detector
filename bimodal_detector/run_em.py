@@ -52,6 +52,7 @@ def run_em(methylation_matrix, windows):
 
     for start, stop in windows:
         section = methylation_matrix[:, start:stop]
+        section.eliminate_zeros()
         row_filter = section.getnnz(1)>0
         section = section[row_filter].toarray()
         sec_read_ind = read_indices[row_filter]
