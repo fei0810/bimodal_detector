@@ -151,13 +151,13 @@ def epistate_plus_info(lambda_t, theta_high, theta_low, x):
     '''
     C, M = x.shape
     T = len(lambda_t)
-    log_high = np.tile(calc_x_given_prob(theta_high, x), (1, T)).T
-    log_low =  np.tile(calc_x_given_prob(theta_low, x), (1, T)).T
-    lt = np.tile(lambda_t, (C, 1)).T
-    log_z = logsumexp([log_high + np.log(lt), log_low + np.log(1 - lt)], axis=0)
-    log_z = log_z - np.tile(logsumexp(log_z, axis=0), (T,1))
-    alpha = np.sum(np.exp(log_z), axis=1)
-    alpha = alpha/np.sum(alpha)
+    log_high = np.tile(calc_x_given_prob(theta_high, x), (T, 1)) #T,C
+    log_low =  np.tile(calc_x_given_prob(theta_low, x), (T, 1)) #T,C
+    lt = np.tile(lambda_t, (C, 1)).T #T, C
+    log_z = logsumexp([log_high + np.log(lt), log_low + np.log(1 - lt)], axis=0) #T, C
+    log_z = log_z - np.tile(logsumexp(log_z, axis=0), (T,1)) #T, C
+    alpha = np.sum(np.exp(log_z), axis=1) #T
+    alpha = alpha/np.sum(alpha) #T
     return alpha
 
 def calc_beta(x):
@@ -169,45 +169,45 @@ def calc_beta(x):
     return np.array(beta).flatten()
 
 #%%
-# config = {"genomic_intervals": '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/netanel_pancreas_only.bed',
-#   "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
-#   "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z000000QX.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043W.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043X.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043Y.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000453.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000456.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000459.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000452.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000455.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000458.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000451.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000454.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000457.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z000000QZ.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043T.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043U.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043V.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042D.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042X.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z00000430.epiread.gz'
-#                     ],
-# "labels":["Acinar","Acinar","Acinar","Acinar","Alpha","Alpha","Alpha","Beta","Beta","Beta","Delta","Delta","Delta",
-#           "Duct","Duct","Duct","Duct","Endothel","Endothel","Endothel"],
-# "cell_types" : ["Delta", "Duct", "Acinar" , "Endothel", "Alpha", "Beta"],
-#           "models": ["celfie"],
-#   "outdir": "/Users/ireneu/PycharmProjects/bimodal_detector/results/",
-#   "epiformat": "old_epiread_A",
-#   "header": False,
-#   "bedfile": True,
-#   "parse_snps": False,
-#     "get_pp":False,
-#   "walk_on_list": True,
-#     "verbose" : False,
-#   "window_size": 5,
-#   "step_size": 1,
-#           "bic_threshold":np.inf,
-#     "name": "testing",
-#   "logfile": "log.log"}
-# runner = InfoRunner(config)
-# runner.run()
+config = {"genomic_intervals": '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/netanel_pancreas_only.bed',
+  "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
+  "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z000000QX.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043W.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043X.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043Y.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000453.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000456.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000459.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000452.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000455.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000458.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000451.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000454.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000457.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z000000QZ.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043T.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043U.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043V.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042D.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042X.epiread.gz',
+'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z00000430.epiread.gz'
+                    ],
+"labels":["Acinar","Acinar","Acinar","Acinar","Alpha","Alpha","Alpha","Beta","Beta","Beta","Delta","Delta","Delta",
+          "Duct","Duct","Duct","Duct","Endothel","Endothel","Endothel"],
+"cell_types" : ["Delta", "Duct", "Acinar" , "Endothel", "Alpha", "Beta"],
+          "models": ["epistate-plus"],
+  "outdir": "/Users/ireneu/PycharmProjects/bimodal_detector/results/",
+  "epiformat": "old_epiread_A",
+  "header": False,
+  "bedfile": True,
+  "parse_snps": False,
+    "get_pp":False,
+  "walk_on_list": True,
+    "verbose" : False,
+  "window_size": 5,
+  "step_size": 1,
+          "bic_threshold":np.inf,
+    "name": "testing",
+  "logfile": "log.log"}
+runner = InfoRunner(config)
+runner.run()
