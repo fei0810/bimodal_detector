@@ -41,6 +41,7 @@ class InfoRunner(AtlasEstimator):
         res = defaultdict(list)
         self.input_windows = []
         self.abs_windows = []
+        betas=[]
         for i, interval in enumerate(self.interval_order):
             if type(self.matrices[i]) is list and not self.matrices[i].any():
                 continue
@@ -60,6 +61,7 @@ class InfoRunner(AtlasEstimator):
                 src = self.sources[i][sec_read_ind]
                 source_labels = np.array(self.labels)[src - 1]  # adjusted for index
                 beta = np.vstack([calc_beta(section[np.array(source_labels) == t, :]) for t in self.config["cell_types"]])
+                betas.append(self.cell_types[np.argmin(np.nanmean(beta, axis=1))])
                 for k, cell in enumerate(self.config["cell_types"]):
                     reads = section[np.array(source_labels) == cell, :]
                     if model == "epistate-plus":
@@ -68,8 +70,10 @@ class InfoRunner(AtlasEstimator):
                         res[cell].append(model_to_fun[model](beta, reads)[k])
         a = pd.DataFrame(self.input_windows, columns=["input_chrom", "input_start", "input_end"])
         b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
-        c = pd.DataFrame(res, columns= self.cell_types)
-        return pd.concat([a,b,c], axis=1)
+        c = pd.DataFrame({"lowest_beta": betas})
+        d = pd.DataFrame(res, columns= self.cell_types)
+
+        return pd.concat([a,b,c,d], axis=1)
 
     def region_stats(self):
         input_windows = []
