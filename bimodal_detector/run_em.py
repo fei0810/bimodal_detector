@@ -51,19 +51,17 @@ def run_em(methylation_matrix, windows):
     read_indices = np.arange(methylation_matrix.shape[0])
 
     for start, stop in windows:
-        section = methylation_matrix[:, start:stop]
-        section.eliminate_zeros()
-        row_filter = section.getnnz(1)>0
-        section = section[row_filter].toarray()
-        sec_read_ind = read_indices[row_filter]
+        section, sec_read_ind = clean_section(methylation_matrix, start, stop)
         if not ((section == METHYLATED).any(axis=0) & (section == UNMETHYLATED).any(axis=0)).any():  # uniform data
             continue
         BIC, thetas, probs = run_em_on_window(section.shape[1], section.shape[0],
                                                       section, initial_high, initial_low)
         med_cpg = np.nanmedian(np.nansum((section==METHYLATED)|(section==UNMETHYLATED), axis=1))
+        percent_single = np.nansum(np.nansum((section==METHYLATED)|(section==UNMETHYLATED), axis=1)==1)/section.shape[0]
         output["windows"].append((start,stop))
         output["BIC"].append(BIC)
         output["median_cpg"].append(med_cpg)
+        output["percent_single"].append(percent_single)
         output["Theta_A"].append(thetas[0])
         output["Theta_B"].append(thetas[1])
         output["Probs"].append(probs)
@@ -73,7 +71,21 @@ def run_em(methylation_matrix, windows):
 
     return output
 
-
+def clean_section(methylation_matrix, start, stop):
+    '''
+    remove empty rows from section
+    :param methylation_matrix: csc matrix
+    :param start: index
+    :param stop: index
+    :return: clean section, filtered row indices
+    '''
+    section = methylation_matrix[:, start:stop]
+    read_indices = np.arange(methylation_matrix.shape[0])
+    section.eliminate_zeros()
+    row_filter = section.getnnz(1) > 0
+    section = section[row_filter].toarray()
+    sec_read_ind = read_indices[row_filter]
+    return section, sec_read_ind
 
 def get_all_stats(row_filters, pp_vectors, ind_to_source, n_sources, get_pp):
     '''

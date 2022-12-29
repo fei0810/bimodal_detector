@@ -30,15 +30,10 @@ sys.path.append("/Users/ireneu/PycharmProjects/epiread-tools/") ###
 
 from epiread_tools.epiparser import EpireadReader, CoordsEpiread, epiformat_to_reader
 from epiread_tools.naming_conventions import *
-from epiread_tools.em_utils import calc_coverage, calc_methylated
-from bimodal_detector.run_em import run_em, get_all_stats, get_all_snp_stats, do_walk_on_list
+from bimodal_detector.run_em import run_em, get_all_stats, do_walk_on_list
 from bimodal_detector.filter_bic import *
 from bimodal_detector.runner_utils import *
-import pandas as pd
-import scipy.sparse as sp
-import json
 import logging
-import click
 
 class Runner:
 
@@ -305,74 +300,8 @@ class AtlasEstimator(Runner):
         self.save_thetas()
         self.save_lambda()
 
-@click.command(context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
-@click.option('-j', '--json', help='run from json config file')
-@click.version_option()
-@click.pass_context
-def main(ctx, **kwargs):
-    """deconvolute epiread file using atlas"""
-    with open(kwargs["json"], "r") as jconfig:
-        config = json.load(jconfig)
-    config.update(kwargs)
-    config.update(dict([item.strip('--').split('=') for item in ctx.args]))
-
-    if config["run_type"]=='basic':
-        runner=Runner
-    elif config["run_type"]=='param_estimation':
-        runner=ParamEstimator
-    elif config["run_type"]=='two-step':
-        runner=TwoStepRunner
-    elif config["run_type"]=="atlas_estimation":
-        runner=AtlasEstimator
 
 
-    em_runner = runner(config)
-    em_runner.run()
-
-# if __name__ == '__main__':
-#     main()
-
-config = {"genomic_intervals": '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/netanel_pancreas_only.bed',
-  "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
-  "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z000000QX.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043W.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043X.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043Y.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000453.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000456.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000459.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000452.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000455.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000458.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000451.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000454.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000457.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z000000QZ.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043T.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043U.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043V.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042D.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042X.epiread.gz',
-'/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z00000430.epiread.gz'
-                    ],
-"labels":["Acinar","Acinar","Acinar","Acinar","Alpha","Alpha","Alpha","Beta","Beta","Beta","Delta","Delta","Delta",
-          "Duct","Duct","Duct","Duct","Endothel","Endothel","Endothel"],
-"cell_types" : ["Delta", "Duct", "Acinar" , "Endothel", "Alpha", "Beta"],
-  "outdir": "/Users/ireneu/PycharmProjects/bimodal_detector/results/",
-  "epiformat": "old_epiread_A",
-  "header": False,
-  "bedfile": True,
-  "parse_snps": False,
-    "get_pp":False,
-  "walk_on_list": False,
-    "verbose" : False,
-  "window_size": 2,
-  "step_size": 1,
-          "bic_threshold":np.inf,
-    "name": "testing",
-  "logfile": "log.log"}
-runner = AtlasEstimator(config)
-runner.run()
 #%%
 
 # #TODO:
