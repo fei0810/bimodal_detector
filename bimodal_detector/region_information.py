@@ -7,12 +7,12 @@ import pandas as pd
 import sys
 sys.path.append("/Users/ireneu/PycharmProjects/epiread-tools/") ###
 sys.path.append("/Users/ireneu/PycharmProjects/deconvolution_models/deconvolution_models") ###
-from runner_utils import relative_intervals_to_abs
+from bimodal_detector.runner_utils import relative_intervals_to_abs
 from epiread_tools.naming_conventions import *
 from scipy.special import logsumexp
-from runners import AtlasEstimator
+from bimodal_detector.runners import AtlasEstimator
 from collections import defaultdict
-from run_em import do_walk_on_list, clean_section
+from bimodal_detector.run_em import do_walk_on_list, clean_section
 import os
 
 class InfoRunner(AtlasEstimator):

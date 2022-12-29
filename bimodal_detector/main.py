@@ -1,7 +1,7 @@
 import click
 import json
-from runners import Runner, ParamEstimator, TwoStepRunner, AtlasEstimator
-from region_information import InfoRunner
+from bimodal_detector.runners import Runner, ParamEstimator, TwoStepRunner, AtlasEstimator
+from bimodal_detector.region_information import InfoRunner
 
 @click.command(context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
 @click.option('-j', '--json', help='run from json config file')
