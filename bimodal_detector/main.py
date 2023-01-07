@@ -1,7 +1,7 @@
 import click
 import json
 from bimodal_detector.runners import Runner, ParamEstimator, TwoStepRunner, AtlasEstimator
-from bimodal_detector.region_information import InfoRunner
+from bimodal_detector.region_information import InfoRunner, ConfusionRunner
 
 @click.command(context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
 @click.option('-j', '--json', help='run from json config file')
@@ -24,6 +24,8 @@ def main(ctx, **kwargs):
         runner=AtlasEstimator
     elif config["run_type"] == "info":
         runner = InfoRunner
+    elif config["run_type"] == "confusion":
+        runner = ConfusionRunner
 
     em_runner = runner(config)
     em_runner.run()

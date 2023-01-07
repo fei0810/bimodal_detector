@@ -15,6 +15,8 @@ from collections import defaultdict
 from bimodal_detector.run_em import do_walk_on_list, clean_section
 import os
 
+
+
 class InfoRunner(AtlasEstimator):
 
     def __init__(self, *args, **kwargs):
@@ -37,7 +39,6 @@ class InfoRunner(AtlasEstimator):
 
 
     def calc_info(self, model):
-        model_to_fun = {"celfie": celfie_info, "celfie-plus":celfie_plus_info, "epistate-plus":epistate_plus_info}
         res = defaultdict(list)
         self.input_windows = []
         self.abs_windows = []
@@ -104,6 +105,47 @@ class InfoRunner(AtlasEstimator):
         stats = self.region_stats()
         stats.to_csv(os.path.join(self.outdir, str(self.name) + "_regions_stats.csv"), index=False)
 
+class ConfusionRunner(InfoRunner):
+    '''
+    how each region is assigned
+    '''
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def calc_info(self, model):
+        res = defaultdict(list)
+        self.input_windows = []
+        self.abs_windows = []
+        for i, interval in enumerate(self.interval_order):
+            if type(self.matrices[i]) is list and not self.matrices[i].any():
+                continue
+            window_list = [(0, self.matrices[i].shape[1])]
+            if self.config["walk_on_list"]:
+                window_list = list(do_walk_on_list(window_list, self.config["window_size"], self.config["step_size"]))
+            methylation_matrix = self.matrices[i].tocsc()
+
+            for j, (start, stop) in enumerate(window_list):
+                section, sec_read_ind = clean_section(methylation_matrix, start, stop)
+                if np.sum(section) == 0: #no data
+                    continue
+                self.abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], [(start, stop)])[0])
+                self.input_windows.append((interval.chrom, interval.start, interval.end))
+                high, low = self.theta_A[i][j], self.theta_B[i][j]
+                lt = self.lambdas[i][:,j].flatten()
+                src = self.sources[i][sec_read_ind]
+                source_labels = np.array(self.labels)[src - 1]  # adjusted for index
+                beta = np.vstack([calc_beta(section[np.array(source_labels) == t, :]) for t in self.config["cell_types"]])
+                for k, cell in enumerate(self.config["cell_types"]):
+                    reads = section[np.array(source_labels) == cell, :]
+                    if model == "epistate-plus":
+                        res[cell].append(epistate_plus_info(lt, high, low, reads))
+                    else:
+                        res[cell].append(model_to_fun[model](beta, reads))
+        a = pd.DataFrame(self.input_windows, columns=["input_chrom", "input_start", "input_end"])
+        b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
+        c = pd.DataFrame(res, columns= self.cell_types)
+
+        return pd.concat([a,b,c], axis=1)
 
 
 def calc_x_given_prob(prob, x):
@@ -171,6 +213,8 @@ def calc_beta(x):
     x_c_u = x == UNMETHYLATED
     beta = x_c_m.sum(axis=0)/(x_c_m.sum(axis=0)+x_c_u.sum(axis=0))
     return np.array(beta).flatten()
+
+model_to_fun = {"celfie": celfie_info, "celfie-plus": celfie_plus_info, "epistate-plus": epistate_plus_info}
 
 #%%
 # config = {"genomic_intervals": '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/netanel_pancreas_only.bed',
