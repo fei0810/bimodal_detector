@@ -11,10 +11,12 @@ from bimodal_detector.runner_utils import relative_intervals_to_abs
 from epiread_tools.naming_conventions import *
 from scipy.special import logsumexp
 from bimodal_detector.runners import AtlasEstimator
+from bimodal_detector.run_em import run_em, get_all_stats
 from collections import defaultdict
 from bimodal_detector.run_em import do_walk_on_list, clean_section
 import os
-
+import scipy as sp
+from epiread_tools.em_utils import GenomicInterval
 
 
 class InfoRunner(AtlasEstimator):
@@ -147,6 +149,160 @@ class ConfusionRunner(InfoRunner):
 
         return pd.concat([a,b,c], axis=1)
 
+class LeaveOneOutRunner(ConfusionRunner):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def init_interval_labels(self):
+        #load region labels
+        region_labels = pd.read_csv(self.config["region_labels"], sep="\t", names=["chrom", "start", "end", "label"],
+                                    usecols=[0,1,2,3], header=None)
+        intervals = [str(GenomicInterval().set_from_positions(chrom, start, end)) for chrom, start, end in
+                     region_labels[["chrom", "start", "end"]].to_records(index=False)]
+        interval_to_label = dict(zip(intervals, region_labels["label"].values))
+        labels = [interval_to_label[str(x)] for x in self.interval_order]
+        self.region_labels = labels
+
+    def init_windows(self):
+        self.window_list = []
+        self.abs_windows = []
+        self.input_windows = []
+        for i, interval in enumerate(self.interval_order):
+            window_list = [(0, self.matrices[i].shape[1])]
+            if self.config["walk_on_list"]:
+                window_list = list(do_walk_on_list(window_list, self.config["window_size"], self.config["step_size"]))
+            self.window_list.append(window_list)
+            for j, (start, stop) in enumerate(window_list):
+                self.abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], [(start, stop)])[0])
+                self.input_windows.append((interval.chrom, interval.start, interval.end))
+
+
+    def init_samples(self):
+        self.cell_to_samples = defaultdict(list)
+        for cell, sample in zip(self.config["labels"], self.config["person_id"]):
+            self.cell_to_samples[cell].append(sample)
+
+    def build_refs(self):
+        '''
+        build reference atlases for each region without each person
+        :return:
+        '''
+        self.refs = []
+        for i, interval in enumerate(self.interval_order):
+            ref = {}
+            if type(self.matrices[i]) is list and not self.matrices[i].any():
+                continue
+            methylation_matrix = self.matrices[i].tocsc()
+            for j, (start, stop) in enumerate(self.window_list[i]):
+                section, sec_read_ind = clean_section(methylation_matrix, start, stop)
+                if np.sum(section) == 0: #no data
+                    continue
+                src = self.sources[i][sec_read_ind] # which input sample
+                source_id = np.array(self.config["person_id"])[src - 1] # which person
+                for person in self.cell_to_samples[self.region_labels[i]]:
+                    filt = source_id != person #filter out person
+                    filt_section, filt_sec_read_ind = section[filt,:], sec_read_ind[filt]
+                    filt_src = self.sources[i][filt_sec_read_ind]
+                    source_labels = np.array(self.labels)[filt_src - 1] # which cell types
+                    print(i, section.shape[0], filt_section.shape[0])
+                    beta = np.vstack(
+                        [calc_beta(filt_section[np.array(source_labels) == t, :]) for t in self.config["cell_types"]])
+                    em_results = run_em(sp.sparse.csr_matrix(filt_section), [(start, stop)])
+
+
+                    source_ids = [self.label_to_id[x] for x in source_labels]
+                    stats = get_all_stats(em_results["Indices"], em_results["Probs"],
+                                          dict(zip(np.arange(len(source_ids)), source_ids)),
+                                          len(self.cell_types), self.config["get_pp"])
+                    if person not in ref:
+                        ref[person] = defaultdict(list)
+                    ref[person]["Betas"].append(beta)
+                    ref[person]["Lambdas"].append(stats[1:, :, 4])
+                    ref[person]["ThetaA"].append(em_results["Theta_A"][0])
+                    ref[person]["ThetaB"].append(em_results["Theta_B"][0])
+            self.refs.append(ref)
+        print("hi")
+
+    def calc_info(self, model):
+        res = []
+        for i, interval in enumerate(self.interval_order):
+            if type(self.matrices[i]) is list and not self.matrices[i].any():
+                continue
+            methylation_matrix = self.matrices[i].tocsc()
+            target = self.region_labels[i]
+            for j, (start, stop) in enumerate(self.window_list[i]):
+                section, sec_read_ind = clean_section(methylation_matrix, start, stop)
+                if np.sum(section) == 0: #no data
+                    continue
+                weights = []
+                estimates = []
+                for person in self.cell_to_samples[target]:
+                    ref = self.refs[i][person]
+                    beta, lt, thetaA, thetaB = ref["Betas"][j],ref["Lambdas"][j],ref["ThetaA"][j],ref["ThetaB"][j]
+                    src = self.sources[i][sec_read_ind]
+                    source_id = np.array(self.config["person_id"])[src - 1] #which person
+                    source_labels = np.array(self.labels)[src - 1] #which cell types
+                    filt = (source_id == person) & (source_labels == target) #target person, target cell type
+                    reads = section[filt, :]
+                    weights.append(reads.shape[0])
+                    if model == "epistate-plus":
+                        estimates.append(epistate_plus_info(lt.flatten(), thetaA, thetaB, reads))
+                    else:
+                        estimates.append(model_to_fun[model](beta, reads))
+                res.append(np.average(np.vstack(estimates), weights=weights, axis=0))
+        a = pd.DataFrame(self.input_windows, columns=["input_chrom", "input_start", "input_end"])
+        b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
+        c = pd.DataFrame(res, columns= self.cell_types)
+
+        return pd.concat([a,b,c], axis=1)
+
+    def em_all(self):
+        for i, interval in enumerate(self.interval_order):
+            window_list = [(0, self.matrices[i].shape[1])]
+            if self.config["walk_on_list"]:
+                window_list = list(do_walk_on_list(window_list, self.config["window_size"], self.config["step_size"]))
+            em_results = run_em(self.matrices[i], window_list)
+            stats = get_all_stats(em_results["Indices"], em_results["Probs"], dict(zip(np.arange(len(self.sources[i])), self.sources[i])),
+                                  len(self.config["epiread_files"]), self.config["get_pp"])
+            self.results.append(em_results)
+            self.stats.append(stats)
+
+    def region_stats(self):
+        input_windows = []
+        abs_windows = []
+        bic = []
+        med_cpg = []
+        percent_single = []
+        label = []
+        for i, interval in enumerate(self.interval_order):
+            if "windows" in self.results[i] and self.results[i]["windows"]:  # any windows with results
+                abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
+                input_windows.append([(interval.chrom, interval.start, interval.end)]*len(self.results[i]["windows"]))
+                bic.extend(self.results[i]["BIC"])
+                med_cpg.extend(self.results[i]["median_cpg"])
+                percent_single.extend(self.results[i]["percent_single"])
+                label.append(self.region_labels[i]) #TODO: fix for walk on list
+        a = pd.DataFrame(self.input_windows, columns=["input_chrom", "input_start", "input_end"])
+        b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
+        c = pd.DataFrame({"BIC": bic, "median_cpg": med_cpg, "percent_single":percent_single, "label":label})
+        return pd.concat([a, b, c], axis=1)
+
+    def run(self):
+        self.read()
+        self.init_interval_labels()
+        self.init_windows()
+        self.init_samples()
+        self.build_refs()
+        for model in self.config["models"]:
+            res = self.calc_info(model)
+            #save to file
+            res.to_csv(os.path.join(self.outdir, str(self.name) + "_%s_info.csv"%model), index=False)
+
+        self.em_all() #for stats
+        stats = self.region_stats() #TODO: add labels to stats
+        stats.to_csv(os.path.join(self.outdir, str(self.name) + "_regions_stats.csv"), index=False)
+
+
 
 def calc_x_given_prob(prob, x):
     x_c_m = x == METHYLATED
@@ -217,7 +373,7 @@ def calc_beta(x):
 model_to_fun = {"celfie": celfie_info, "celfie-plus": celfie_plus_info, "epistate-plus": epistate_plus_info}
 
 #%%
-# config = {"genomic_intervals": '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/netanel_pancreas_only.bed',
+# config = {"genomic_intervals": '/Users/ireneu/PycharmProjects/bimodal_detector/results/U25_labels.tsv',
 #   "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
 #   "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z000000QX.epiread.gz',
 # '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043W.epiread.gz',
@@ -240,22 +396,28 @@ model_to_fun = {"celfie": celfie_info, "celfie-plus": celfie_plus_info, "epistat
 # '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042X.epiread.gz',
 # '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z00000430.epiread.gz'
 #                     ],
+#
+#
+# "region_labels":"/Users/ireneu/PycharmProjects/bimodal_detector/results/U25_labels.tsv",
 # "labels":["Acinar","Acinar","Acinar","Acinar","Alpha","Alpha","Alpha","Beta","Beta","Beta","Delta","Delta","Delta",
 #           "Duct","Duct","Duct","Duct","Endothel","Endothel","Endothel"],
+# "person_id":["AFCD035","H2226","H2224","H2220","H2207","H2211","SCICRC1146","H2207","H2211","SCICRC1146","H2207","H2211","SCICRC1146",
+#              "AFCD035","H2226","H2224","H2220","UA213A","UA212","UA205"],
 # "cell_types" : ["Delta", "Duct", "Acinar" , "Endothel", "Alpha", "Beta"],
-#           "models": ["epistate-plus"],
+#           "models": ["celfie-plus", "celfie","epistate-plus"],
 #   "outdir": "/Users/ireneu/PycharmProjects/bimodal_detector/results/",
 #   "epiformat": "old_epiread_A",
 #   "header": False,
 #   "bedfile": True,
 #   "parse_snps": False,
 #     "get_pp":False,
-#   "walk_on_list": True,
+#   "walk_on_list": False,
 #     "verbose" : False,
 #   "window_size": 5,
 #   "step_size": 1,
 #           "bic_threshold":np.inf,
-#     "name": "testing",
+#     "name": "U25_leave_one_out_confusion",
 #   "logfile": "log.log"}
-# runner = InfoRunner(config)
+# runner = LeaveOneOutRunner(config)
 # runner.run()
+#%%
