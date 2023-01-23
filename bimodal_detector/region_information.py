@@ -154,6 +154,12 @@ class LeaveOneOutRunner(ConfusionRunner):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def filter_regions(self, filt):
+        self.interval_order = list(compress(self.interval_order, filt))
+        self.matrices, self.cpgs, self.origins, self.sources = [list(compress(x, filt)) for x in
+                                                                (self.matrices, self.cpgs, self.origins, self.sources)]
+
+
     def init_interval_labels(self):
         #load region labels
         region_labels = pd.read_csv(self.config["region_labels"], sep="\t", names=["chrom", "start", "end", "label"],
@@ -163,8 +169,8 @@ class LeaveOneOutRunner(ConfusionRunner):
         interval_to_label = dict(zip(intervals, region_labels["label"].values))
         labels = [interval_to_label[str(x)] for x in self.interval_order]
         filt = [x in self.cell_types for x in labels]
-        self.interval_order = list(compress(self.interval_order, filt))
         self.region_labels = list(compress(labels, filt))
+        self.filter_regions(filt)
 
     def init_windows(self):
         self.window_list = []
@@ -300,7 +306,7 @@ class LeaveOneOutRunner(ConfusionRunner):
             res.to_csv(os.path.join(self.outdir, str(self.name) + "_%s_info.csv"%model), index=False)
 
         self.em_all() #for stats
-        stats = self.region_stats() #TODO: add labels to stats
+        stats = self.region_stats()
         stats.to_csv(os.path.join(self.outdir, str(self.name) + "_regions_stats.csv"), index=False)
 
 
