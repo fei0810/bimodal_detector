@@ -119,7 +119,6 @@ class ConfusionRunner(InfoRunner):
     '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.init_interval_labels()
 
     def init_interval_labels(self):
         #load region labels
@@ -187,6 +186,20 @@ class ConfusionRunner(InfoRunner):
         b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
         c = pd.DataFrame({"BIC": bic, "median_cpg": med_cpg, "percent_single":percent_single, "label":label})
         return pd.concat([a, b, c], axis=1)
+
+    def run(self):
+        self.read()
+        self.init_interval_labels()
+        self.em_all()
+        self.read_thetas()
+        for model in self.config["models"]:
+            res = self.calc_info(model)
+            #save to file
+            res.to_csv(os.path.join(self.outdir, str(self.name) + "_%s_info.csv"%model), index=False)
+        stats = self.region_stats()
+        stats.to_csv(os.path.join(self.outdir, str(self.name) + "_regions_stats.csv"), index=False)
+
+
 
 class LeaveOneOutRunner(ConfusionRunner):
     def __init__(self, *args, **kwargs):
