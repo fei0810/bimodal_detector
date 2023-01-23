@@ -25,6 +25,11 @@ class InfoRunner(AtlasEstimator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def filter_regions(self, filt):
+        self.interval_order = list(compress(self.interval_order, filt))
+        self.matrices, self.cpgs, self.origins, self.sources = [list(compress(x, filt)) for x in
+                                                                (self.matrices, self.cpgs, self.origins, self.sources)]
+
     def read_thetas(self):
         self.theta_A = []
         self.theta_B = []
@@ -114,6 +119,19 @@ class ConfusionRunner(InfoRunner):
     '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.init_interval_labels()
+
+    def init_interval_labels(self):
+        #load region labels
+        region_labels = pd.read_csv(self.config["region_labels"], sep="\t", names=["chrom", "start", "end", "label"],
+                                    usecols=[0,1,2,3], header=None)
+        intervals = [str(GenomicInterval().set_from_positions(chrom, start, end)) for chrom, start, end in
+                     region_labels[["chrom", "start", "end"]].to_records(index=False)]
+        interval_to_label = dict(zip(intervals, region_labels["label"].values))
+        labels = [interval_to_label[str(x)] for x in self.interval_order]
+        filt = [x in self.cell_types for x in labels]
+        self.region_labels = list(compress(labels, filt))
+        self.filter_regions(filt)
 
     def calc_info(self, model):
         res = defaultdict(list)
@@ -150,27 +168,29 @@ class ConfusionRunner(InfoRunner):
 
         return pd.concat([a,b,c], axis=1)
 
+    def region_stats(self):
+        input_windows = []
+        abs_windows = []
+        bic = []
+        med_cpg = []
+        percent_single = []
+        label = []
+        for i, interval in enumerate(self.interval_order):
+            if "windows" in self.results[i] and self.results[i]["windows"]:  # any windows with results
+                abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
+                input_windows.append([(interval.chrom, interval.start, interval.end)]*len(self.results[i]["windows"]))
+                bic.extend(self.results[i]["BIC"])
+                med_cpg.extend(self.results[i]["median_cpg"])
+                percent_single.extend(self.results[i]["percent_single"])
+                label.append(self.region_labels[i]) #TODO: fix for walk on list
+        a = pd.DataFrame(self.input_windows, columns=["input_chrom", "input_start", "input_end"])
+        b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
+        c = pd.DataFrame({"BIC": bic, "median_cpg": med_cpg, "percent_single":percent_single, "label":label})
+        return pd.concat([a, b, c], axis=1)
+
 class LeaveOneOutRunner(ConfusionRunner):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    def filter_regions(self, filt):
-        self.interval_order = list(compress(self.interval_order, filt))
-        self.matrices, self.cpgs, self.origins, self.sources = [list(compress(x, filt)) for x in
-                                                                (self.matrices, self.cpgs, self.origins, self.sources)]
-
-
-    def init_interval_labels(self):
-        #load region labels
-        region_labels = pd.read_csv(self.config["region_labels"], sep="\t", names=["chrom", "start", "end", "label"],
-                                    usecols=[0,1,2,3], header=None)
-        intervals = [str(GenomicInterval().set_from_positions(chrom, start, end)) for chrom, start, end in
-                     region_labels[["chrom", "start", "end"]].to_records(index=False)]
-        interval_to_label = dict(zip(intervals, region_labels["label"].values))
-        labels = [interval_to_label[str(x)] for x in self.interval_order]
-        filt = [x in self.cell_types for x in labels]
-        self.region_labels = list(compress(labels, filt))
-        self.filter_regions(filt)
 
     def init_windows(self):
         self.window_list = []
@@ -262,37 +282,6 @@ class LeaveOneOutRunner(ConfusionRunner):
         c = pd.DataFrame(res, columns= self.cell_types)
 
         return pd.concat([a,b,c], axis=1)
-
-    def em_all(self):
-        for i, interval in enumerate(self.interval_order):
-            window_list = [(0, self.matrices[i].shape[1])]
-            if self.config["walk_on_list"]:
-                window_list = list(do_walk_on_list(window_list, self.config["window_size"], self.config["step_size"]))
-            em_results = run_em(self.matrices[i], window_list)
-            stats = get_all_stats(em_results["Indices"], em_results["Probs"], dict(zip(np.arange(len(self.sources[i])), self.sources[i])),
-                                  len(self.config["epiread_files"]), self.config["get_pp"])
-            self.results.append(em_results)
-            self.stats.append(stats)
-
-    def region_stats(self):
-        input_windows = []
-        abs_windows = []
-        bic = []
-        med_cpg = []
-        percent_single = []
-        label = []
-        for i, interval in enumerate(self.interval_order):
-            if "windows" in self.results[i] and self.results[i]["windows"]:  # any windows with results
-                abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
-                input_windows.append([(interval.chrom, interval.start, interval.end)]*len(self.results[i]["windows"]))
-                bic.extend(self.results[i]["BIC"])
-                med_cpg.extend(self.results[i]["median_cpg"])
-                percent_single.extend(self.results[i]["percent_single"])
-                label.append(self.region_labels[i]) #TODO: fix for walk on list
-        a = pd.DataFrame(self.input_windows, columns=["input_chrom", "input_start", "input_end"])
-        b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
-        c = pd.DataFrame({"BIC": bic, "median_cpg": med_cpg, "percent_single":percent_single, "label":label})
-        return pd.concat([a, b, c], axis=1)
 
     def run(self):
         self.read()
