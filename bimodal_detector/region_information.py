@@ -204,9 +204,8 @@ class LeaveOneOutRunner(ConfusionRunner):
                     filt_section, filt_sec_read_ind = section[filt,:], sec_read_ind[filt]
                     filt_src = self.sources[i][filt_sec_read_ind]
                     source_labels = np.array(self.labels)[filt_src - 1] # which cell types
-                    print(i, section.shape[0], filt_section.shape[0])
                     beta = np.vstack(
-                        [calc_beta(filt_section[np.array(source_labels) == t, :]) for t in self.config["cell_types"]])
+                        [calc_beta(filt_section[np.array(source_labels) == t, :], filt_section.shape[1]) for t in self.config["cell_types"]])
                     em_results = run_em(sp.sparse.csr_matrix(filt_section), [(start, stop)])
 
 
@@ -221,7 +220,6 @@ class LeaveOneOutRunner(ConfusionRunner):
                     ref[person]["ThetaA"].append(em_results["Theta_A"][0])
                     ref[person]["ThetaB"].append(em_results["Theta_B"][0])
             self.refs.append(ref)
-        print("hi")
 
     def calc_info(self, model):
         res = []
@@ -362,9 +360,11 @@ def epistate_plus_info(lambda_t, theta_high, theta_low, x):
     alpha = alpha/np.sum(alpha) #T
     return alpha
 
-def calc_beta(x):
+def calc_beta(x, n_cols=1):
     if not x.any():
-        return np.nan
+        res = np.zeros(n_cols)
+        res.fill(np.nan)
+        return res
     x_c_m = x == METHYLATED
     x_c_u = x == UNMETHYLATED
     beta = x_c_m.sum(axis=0)/(x_c_m.sum(axis=0)+x_c_u.sum(axis=0))
