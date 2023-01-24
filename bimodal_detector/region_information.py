@@ -288,7 +288,9 @@ class LeaveOneOutRunner(ConfusionRunner):
                         estimates.append(epistate_plus_info(lt.flatten(), thetaA, thetaB, reads))
                     else:
                         estimates.append(model_to_fun[model](beta, reads))
-                res.append(np.average(np.vstack(estimates), weights=weights, axis=0))
+                weights = np.array(weights)
+                has_reads = weights > 0
+                res.append(np.average(np.vstack(estimates)[has_reads,:], weights=weights[has_reads], axis=0))
         a = pd.DataFrame(self.input_windows, columns=["input_chrom", "input_start", "input_end"])
         b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
         c = pd.DataFrame(res, columns= self.cell_types)
