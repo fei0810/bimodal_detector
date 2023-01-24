@@ -285,9 +285,10 @@ class LeaveOneOutRunner(ConfusionRunner):
                     reads = section[filt, :]
                     weights.append(reads.shape[0])
                     if model == "epistate-plus":
-                        estimates.append(epistate_plus_info(lt.flatten(), thetaA, thetaB, reads))
+                        estimates.append(epistate_plus_info(add_pseudocounts(lt.flatten()), add_pseudocounts(thetaA),
+                                                            add_pseudocounts(thetaB), reads))
                     else:
-                        estimates.append(model_to_fun[model](beta, reads))
+                        estimates.append(model_to_fun[model](add_pseudocounts(beta), reads))
                 weights = np.array(weights)
                 has_reads = weights > 0
                 res.append(np.average(np.vstack(estimates)[has_reads,:], weights=weights[has_reads], axis=0))
@@ -312,7 +313,17 @@ class LeaveOneOutRunner(ConfusionRunner):
         stats = self.region_stats()
         stats.to_csv(os.path.join(self.outdir, str(self.name) + "_regions_stats.csv"), index=False)
 
-
+def add_pseudocounts(arr):
+    '''
+    move slightly away from 1 and 0
+    :param arr: numpy array
+    :return: changes array inplace
+    '''
+    pc = 1e-10
+    new_arr = arr.copy()
+    new_arr[arr==0] += pc
+    new_arr[arr==1] -= pc
+    return new_arr
 
 def calc_x_given_prob(prob, x):
     x_c_m = x == METHYLATED
