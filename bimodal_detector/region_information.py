@@ -133,7 +133,7 @@ class ConfusionRunner(InfoRunner):
         self.filter_regions(filt)
 
     def calc_info(self, model):
-        res = defaultdict(list)
+        res = []
         self.input_windows = []
         self.abs_windows = []
         for i, interval in enumerate(self.interval_order):
@@ -143,7 +143,7 @@ class ConfusionRunner(InfoRunner):
             if self.config["walk_on_list"]:
                 window_list = list(do_walk_on_list(window_list, self.config["window_size"], self.config["step_size"]))
             methylation_matrix = self.matrices[i].tocsc()
-
+            target = self.region_labels[i]
             for j, (start, stop) in enumerate(window_list):
                 section, sec_read_ind = clean_section(methylation_matrix, start, stop)
                 if np.sum(section) == 0: #no data
@@ -155,12 +155,11 @@ class ConfusionRunner(InfoRunner):
                 src = self.sources[i][sec_read_ind]
                 source_labels = np.array(self.labels)[src - 1]  # adjusted for index
                 beta = np.vstack([calc_beta(section[np.array(source_labels) == t, :]) for t in self.config["cell_types"]])
-                for k, cell in enumerate(self.config["cell_types"]):
-                    reads = section[np.array(source_labels) == cell, :]
-                    if model == "epistate-plus":
-                        res[cell].append(epistate_plus_info(lt, high, low, reads))
-                    else:
-                        res[cell].append(model_to_fun[model](beta, reads))
+                reads = section[np.array(source_labels) == target, :]
+                if model == "epistate-plus":
+                    res.append(epistate_plus_info(lt, high, low, reads))
+                else:
+                    res.append(model_to_fun[model](beta, reads))
         a = pd.DataFrame(self.input_windows, columns=["input_chrom", "input_start", "input_end"])
         b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
         c = pd.DataFrame(res, columns= self.cell_types)
