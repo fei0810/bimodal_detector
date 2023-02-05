@@ -272,7 +272,6 @@ class AtlasEstimator(Runner):
             self.lambdas.append(stats[1:,:,4])#remove ALL and keep only mean pp column
 
 
-
     def save_thetas(self):
         input_windows = []
         abs_windows = []
@@ -297,8 +296,9 @@ class AtlasEstimator(Runner):
     def run(self):
         self.read()
         self.em_all()
-        self.save_thetas()
         self.save_lambda()
+        self.save_thetas()
+
 
 
 
@@ -311,3 +311,54 @@ class AtlasEstimator(Runner):
 # implement param estimation
 # add logging
 # add tests
+
+# config = {"genomic_intervals": '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/040223_U25_25_merged_regions_file.bed',
+#   "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
+#   "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z000000QX.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043W.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043X.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043Y.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000453.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000456.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000459.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000452.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000455.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000458.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000451.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000454.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000457.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z000000QZ.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043T.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043U.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043V.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042D.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042X.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z00000430.epiread.gz'
+#                     ],
+# "region_labels":"",
+# "labels":['Pancreas-Acinar', 'Pancreas-Acinar', 'Pancreas-Acinar', 'Pancreas-Acinar', 'Pancreas-Alpha',
+#           'Pancreas-Alpha', 'Pancreas-Alpha', 'Pancreas-Beta', 'Pancreas-Beta','Pancreas-Beta',
+#           'Pancreas-Delta', 'Pancreas-Delta', 'Pancreas-Delta', 'Pancreas-Duct', 'Pancreas-Duct',
+#     'Pancreas-Duct','Pancreas-Duct', 'Endothelium','Endothelium','Endothelium'],
+# "person_id":[],
+# "cell_types" : ['Liver-Hep', 'Lung-Ep-Alveo', 'Skeletal-Musc', 'Blood-T', 'Eryth-prog',
+#           'Colon-Ep', 'Neuron', 'Blood-NK', 'Pancreas-Delta', 'Oligodend', 'Pancreas-Acinar',
+#          'Blood-B', 'Pancreas-Beta', 'Bladder-Ep', 'Smooth-Musc',
+#           'Kidney-Ep', 'Pancreas-Duct', 'Pancreas-Alpha', 'Thyroid-Ep', 'Heart-Cardio',
+#           'Endothelium', 'Prostate-Ep', 'Gastric-Ep', 'Blood-Granul', 'Blood-Mono+Macro'],
+#           "models": ["epistate-plus", "celfie-plus", "celfie"],
+#   "outdir": "/Users/ireneu/PycharmProjects/bimodal_detector/results/",
+#   "epiformat": "old_epiread_A",
+#   "header": False,
+#   "bedfile": True,
+#   "parse_snps": False,
+#     "get_pp":False,
+#   "walk_on_list": False,
+#     "verbose" : False,
+#   "window_size": 5,
+#   "step_size": 1,
+#           "bic_threshold":np.inf,
+#     "name": "Loyfer25",
+#   "logfile": "log.log"}
+# runner = AtlasEstimator(config)
+# runner.run()
