@@ -245,8 +245,16 @@ class LeaveOneOutRunner(ConfusionRunner):
                     filt_section, filt_sec_read_ind = section[filt,:], sec_read_ind[filt]
                     filt_src = self.sources[i][filt_sec_read_ind]
                     source_labels = np.array(self.labels)[filt_src - 1] # which cell types
-                    beta = np.vstack(
-                        [calc_beta(filt_section[np.array(source_labels) == t, :], filt_section.shape[1]) for t in self.config["cell_types"]])
+                    meth = []
+                    cov = []
+                    for t in self.config["cell_types"]:
+                        m, c = calc_meth_cov(filt_section[np.array(source_labels) == t, :], filt_section.shape[1])
+                        meth.append(m)
+                        cov.append(c)
+                    # beta = np.vstack(
+                    #     [calc_beta(filt_section[np.array(source_labels) == t, :], filt_section.shape[1]) for t in self.config["cell_types"]])
+                    meth, cov = np.vstack(meth), np.vstack(cov)
+                    beta = meth/cov
                     em_results = run_em(sp.sparse.csr_matrix(filt_section), [(start, stop)])
 
 
@@ -257,6 +265,8 @@ class LeaveOneOutRunner(ConfusionRunner):
                     if person not in ref:
                         ref[person] = defaultdict(list)
                     ref[person]["Betas"].append(beta)
+                    ref[person]["Meths"].append(meth)
+                    ref[person]["Covs"].append(cov)
                     ref[person]["Lambdas"].append(stats[1:, :, 4])
                     ref[person]["ThetaA"].append(em_results["Theta_A"][0])
                     ref[person]["ThetaB"].append(em_results["Theta_B"][0])
@@ -278,6 +288,7 @@ class LeaveOneOutRunner(ConfusionRunner):
                 for person in self.cell_to_samples[target]:
                     ref = self.refs[i][person]
                     beta, lt, thetaA, thetaB = ref["Betas"][j],ref["Lambdas"][j],ref["ThetaA"][j],ref["ThetaB"][j]
+                    meth, cov = ref["Meths"][j],ref["Covs"][j],
                     src = self.sources[i][sec_read_ind]
                     source_id = np.array(self.config["person_id"])[src - 1] #which person
                     source_labels = np.array(self.labels)[src - 1] #which cell types
@@ -287,6 +298,8 @@ class LeaveOneOutRunner(ConfusionRunner):
                     if model == "epistate-plus":
                         estimates.append(epistate_plus_info(add_pseudocounts(lt.flatten()), add_pseudocounts(thetaA),
                                                             add_pseudocounts(thetaB), reads))
+                    elif model == "sum-celfie":
+                        estimates.append(sum_celfie_info(meth, cov, reads))
                     else:
                         estimates.append(model_to_fun[model](add_pseudocounts(beta), reads))
                 weights = np.array(weights)
@@ -333,9 +346,20 @@ def calc_x_given_prob(prob, x):
     res = (np.matmul(x_c_m, log_prob) + np.matmul(x_c_u, log_one_minus_prob)).T
     return res
 
+def sum_celfie_info(meth, cov, x):
+    '''
+    :param x: np array with c reads, m cpgs
+    :param beta_t_m: np array with t cell types, m cpgs
+    :return: info per cell type t
+    '''
+    sum_meth = np.sum(meth, axis=1)
+    sum_cov = np.sum(cov, axis=1)
+    beta_t_m = (sum_meth/sum_cov).reshape(meth.shape[0], 1)
+    new_x = x.flatten().reshape(-1, 1)
+    return celfie_plus_info(beta_t_m, new_x)
+
 def celfie_info(beta_t_m, x):
     '''
-
     :param x: np array with c reads, m cpgs
     :param beta_t_m: np array with t cell types, m cpgs
     :return: info per cell type t
@@ -383,6 +407,21 @@ def epistate_plus_info(lambda_t, theta_high, theta_low, x):
     alpha = alpha/np.sum(alpha) #T
     return alpha
 
+def calc_meth_cov(x, n_cols=1):
+    if not x.any():
+        res = np.zeros(n_cols)
+        res.fill(np.nan)
+        return res
+    x_c_m = x == METHYLATED
+    x_c_u = x == UNMETHYLATED
+    meth = x_c_m.sum(axis=0)
+    cov = (x_c_m.sum(axis=0)+x_c_u.sum(axis=0))
+    meth, cov = np.array(meth).flatten(),  np.array(cov).flatten()
+    filt = (meth == cov)|meth==0 #pseudocounts
+    meth[filt] += 1
+    cov[filt] += 2
+    return meth, cov
+
 def calc_beta(x, n_cols=1):
     if not x.any():
         res = np.zeros(n_cols)
@@ -393,8 +432,58 @@ def calc_beta(x, n_cols=1):
     beta = x_c_m.sum(axis=0)/(x_c_m.sum(axis=0)+x_c_u.sum(axis=0))
     return np.array(beta).flatten()
 
-model_to_fun = {"celfie": celfie_info, "celfie-plus": celfie_plus_info, "epistate-plus": epistate_plus_info}
+model_to_fun = {"celfie": celfie_info, "celfie-plus": celfie_plus_info, "epistate-plus": epistate_plus_info,
+                "sum-celfie": sum_celfie_info}
 
 #%%
 
-#%%
+# #%%
+# config = {"genomic_intervals": '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/U25_pancreatic.bed',
+#   "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
+#   "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z000000QX.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043W.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043X.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043Y.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000453.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000456.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000459.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000452.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000455.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000458.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000451.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000454.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000457.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z000000QZ.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043T.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043U.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043V.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042D.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042X.epiread.gz',
+# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z00000430.epiread.gz'
+#                     ],
+# "region_labels":"/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/U25_pancreatic.bed",
+# "labels":['Pancreas-Acinar', 'Pancreas-Acinar', 'Pancreas-Acinar', 'Pancreas-Acinar', 'Pancreas-Alpha',
+#           'Pancreas-Alpha', 'Pancreas-Alpha', 'Pancreas-Beta', 'Pancreas-Beta','Pancreas-Beta',
+#           'Pancreas-Delta', 'Pancreas-Delta', 'Pancreas-Delta', 'Pancreas-Duct', 'Pancreas-Duct',
+#     'Pancreas-Duct','Pancreas-Duct', 'Endothelium','Endothelium','Endothelium'],
+# "person_id":["H2226","H2224","H2220","H2207","H2211","SCICRC1146","H2207","H2211","SCICRC1146","H2207","H2211","SCICRC1146","H2226","H2224","H2220","UA205","AFCD035","AFCD035","UA213A","UA212"], #wrong
+# "cell_types" : ['Pancreas-Delta', 'Pancreas-Acinar',
+#           'Pancreas-Beta', 'Pancreas-Duct', 'Pancreas-Alpha',
+#           'Endothelium'],
+#           "models": ["sum-celfie", "epistate-plus", "celfie-plus", "celfie"],
+#   "outdir": "/Users/ireneu/PycharmProjects/bimodal_detector/results/",
+#   "epiformat": "old_epiread_A",
+#   "header": False,
+#   "bedfile": True,
+#   "parse_snps": False,
+#     "get_pp":False,
+#   "walk_on_list": False,
+#     "verbose" : False,
+#   "window_size": 5,
+#   "step_size": 1,
+#           "bic_threshold":np.inf,
+#     "name": "Loyfer25",
+#   "logfile": "log.log"}
+#
+# runner = LeaveOneOutRunner(config)
+# runner.run()
