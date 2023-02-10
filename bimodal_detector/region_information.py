@@ -413,13 +413,13 @@ def calc_meth_cov(x, n_cols=1):
     if not x.any():
         res = np.zeros(n_cols)
         res.fill(np.nan)
-        return res
+        return res, res
     x_c_m = x == METHYLATED
     x_c_u = x == UNMETHYLATED
     meth = x_c_m.sum(axis=0)
     cov = (x_c_m.sum(axis=0)+x_c_u.sum(axis=0))
     meth, cov = np.array(meth).flatten(),  np.array(cov).flatten()
-    filt = (meth == cov)|meth==0 #pseudocounts
+    filt = (meth == cov)|(meth==0) #pseudocounts
     meth[filt] += 1
     cov[filt] += 2
     return meth, cov
