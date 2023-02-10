@@ -173,6 +173,7 @@ class ConfusionRunner(InfoRunner):
         abs_windows = []
         bic = []
         med_cpg = []
+        sizes = []
         percent_single = []
         label = []
         for i, interval in enumerate(self.interval_order):
@@ -182,10 +183,11 @@ class ConfusionRunner(InfoRunner):
                 bic.extend(self.results[i]["BIC"])
                 med_cpg.extend(self.results[i]["median_cpg"])
                 percent_single.extend(self.results[i]["percent_single"])
+                sizes.extend([end-start for (start, end) in self.results[i]["windows"]])
                 label.append(self.region_labels[i]) #TODO: fix for walk on list
         a = pd.DataFrame(self.input_windows, columns=["input_chrom", "input_start", "input_end"])
         b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
-        c = pd.DataFrame({"BIC": bic, "median_cpg": med_cpg, "percent_single":percent_single, "label":label})
+        c = pd.DataFrame({"BIC": bic, "median_cpg": med_cpg, "percent_single":percent_single, "n_cg": sizes, "label":label})
         return pd.concat([a, b, c], axis=1)
 
     def run(self):
