@@ -87,6 +87,7 @@ class InfoRunner(AtlasEstimator):
     def region_stats(self):
         input_windows = []
         abs_windows = []
+        sizes = []
         bic = []
         med_cpg = []
         percent_single = []
@@ -96,10 +97,11 @@ class InfoRunner(AtlasEstimator):
                 input_windows.append([(interval.chrom, interval.start, interval.end)]*len(self.results[i]["windows"]))
                 bic.extend(self.results[i]["BIC"])
                 med_cpg.extend(self.results[i]["median_cpg"])
+                sizes.extend([end-start for (start, end) in self.results[i]["windows"]])
                 percent_single.extend(self.results[i]["percent_single"])
         a = pd.DataFrame(self.input_windows, columns=["input_chrom", "input_start", "input_end"])
         b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
-        c = pd.DataFrame({"BIC": bic, "median_cpg": med_cpg, "percent_single":percent_single})
+        c = pd.DataFrame({"BIC": bic, "median_cpg": med_cpg, "percent_single":percent_single, "n_cg": sizes})
         return pd.concat([a, b, c], axis=1)
 
     def run(self):
