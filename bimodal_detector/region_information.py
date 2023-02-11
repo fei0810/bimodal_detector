@@ -314,7 +314,12 @@ class LeaveOneOutRunner(ConfusionRunner):
                         estimates.append(model_to_fun[model](add_pseudocounts(beta), reads))
                 weights = np.array(weights)
                 has_reads = weights > 0
-                res.append(np.average(np.vstack(estimates)[has_reads,:], weights=weights[has_reads], axis=0))
+                if np.sum(weights) == 0: #TODO: figure out when this happens
+                    null = np.zeros(len(self.cell_types))
+                    null.fill(np.nan)
+                    res.append(null)
+                else:
+                    res.append(np.average(np.vstack(estimates)[has_reads,:], weights=weights[has_reads], axis=0))
         a = pd.DataFrame(self.input_windows, columns=["input_chrom", "input_start", "input_end"])
         b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
         c = pd.DataFrame(res, columns= self.cell_types)
