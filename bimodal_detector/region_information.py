@@ -272,8 +272,14 @@ class LeaveOneOutRunner(ConfusionRunner):
                     ref[person]["Meths"].append(meth)
                     ref[person]["Covs"].append(cov)
                     ref[person]["Lambdas"].append(stats[1:, :, 4])
-                    ref[person]["ThetaA"].extend(em_results["Theta_A"])
-                    ref[person]["ThetaB"].extend(em_results["Theta_B"])
+                    try:
+                        ref[person]["ThetaA"].append(em_results["Theta_A"][0])
+                        ref[person]["ThetaB"].append(em_results["Theta_B"][0])
+                    except:
+                        null = np.zeros(beta.shape[1])
+                        null.fill(np.nan)
+                        ref[person]["ThetaA"].append(null)
+                        ref[person]["ThetaB"].append(null)
             self.refs.append(ref)
 
     def calc_info(self, model):
