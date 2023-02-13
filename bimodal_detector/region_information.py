@@ -413,6 +413,10 @@ def epistate_plus_info(lambda_t, theta_high, theta_low, x):
     '''
     C, M = x.shape
     T = len(lambda_t)
+    if C == 0 or T==0 or M==0:
+        null = np.zeros(T)
+        null.fill(np.nan)
+        return null
     log_high = np.tile(calc_x_given_prob(theta_high, x), (T, 1)) #T,C
     log_low =  np.tile(calc_x_given_prob(theta_low, x), (T, 1)) #T,C
     lt = np.tile(lambda_t, (C, 1)).T #T, C
