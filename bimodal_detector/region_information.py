@@ -133,6 +133,7 @@ class ConfusionRunner(InfoRunner):
         filt = [x in self.cell_types for x in labels]
         self.region_labels = list(compress(labels, filt))
         self.filter_regions(filt)
+        self.region_to_label = dict(zip([str(x) for x in self.interval_order], self.region_labels))
 
     def calc_info(self, model):
         res = []
@@ -218,8 +219,6 @@ class LeaveOneOutRunner(ConfusionRunner):
                 window_list = list(do_walk_on_list(window_list, self.config["window_size"], self.config["step_size"]))
             self.window_list.append(window_list)
 
-
-
     def init_samples(self):
         self.cell_to_samples = defaultdict(list)
         for cell, sample in zip(self.config["labels"], self.config["person_id"]):
@@ -242,7 +241,7 @@ class LeaveOneOutRunner(ConfusionRunner):
                     continue
                 src = self.sources[i][sec_read_ind] # which input sample
                 source_id = np.array(self.config["person_id"])[src - 1] # which person
-                for person in self.cell_to_samples[self.region_labels[i]]:
+                for person in self.cell_to_samples[self.region_to_label[str(interval)]]:
                     filt = source_id != person #filter out person
                     filt_section, filt_sec_read_ind = section[filt,:], sec_read_ind[filt]
                     filt_src = self.sources[i][filt_sec_read_ind]
@@ -258,7 +257,6 @@ class LeaveOneOutRunner(ConfusionRunner):
                     meth, cov = np.vstack(meth), np.vstack(cov)
                     beta = meth/cov
                     em_results = run_em(sp.sparse.csr_matrix(filt_section), [(start, stop)])
-
 
                     source_ids = [self.label_to_id[x] for x in source_labels]
                     stats = get_all_stats(em_results["Indices"], em_results["Probs"],
@@ -278,7 +276,7 @@ class LeaveOneOutRunner(ConfusionRunner):
                         null.fill(np.nan)
                         ref[person]["ThetaA"].append(null)
                         ref[person]["ThetaB"].append(null)
-            self.refs[str(interval)][(start, stop)] = ref
+                self.refs[str(interval)][(start, stop)] = ref
 
     def calc_info(self, model):
         res = []
@@ -288,7 +286,7 @@ class LeaveOneOutRunner(ConfusionRunner):
             if type(self.matrices[i]) is list and not self.matrices[i].any():
                 continue
             methylation_matrix = self.matrices[i].tocsc()
-            target = self.region_labels[i]
+            target = self.region_to_labelp[str(interval)]
             for j, (start, stop) in enumerate(self.window_list[i]):
                 section, sec_read_ind = clean_section(methylation_matrix, start, stop)
                 if np.sum(section) == 0: #no data
