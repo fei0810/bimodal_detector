@@ -179,8 +179,8 @@ class ConfusionRunner(InfoRunner):
         label = []
         for i, interval in enumerate(self.interval_order):
             if "windows" in self.results[i] and self.results[i]["windows"]:  # any windows with results
-                abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"]))
-                input_windows.append([(interval.chrom, interval.start, interval.end)]*len(self.results[i]["windows"]))
+                abs_windows.extend(list(relative_intervals_to_abs(interval.chrom, self.cpgs[i], self.results[i]["windows"])))
+                input_windows.extend([(interval.chrom, interval.start, interval.end)]*len(self.results[i]["windows"]))
                 bic.extend(self.results[i]["BIC"])
                 med_cpg.extend(self.results[i]["median_cpg"])
                 percent_single.extend(self.results[i]["percent_single"])
@@ -468,7 +468,7 @@ model_to_fun = {"celfie": celfie_info, "celfie-plus": celfie_plus_info, "epistat
 #TODO: refactor
 #%%
 
-# #%%
+# # #%%
 # config = {"genomic_intervals": '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_regions.bed',
 #   "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
 #   "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z000000QX.epiread.gz',
