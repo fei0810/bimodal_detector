@@ -286,7 +286,7 @@ class LeaveOneOutRunner(ConfusionRunner):
             if type(self.matrices[i]) is list and not self.matrices[i].any():
                 continue
             methylation_matrix = self.matrices[i].tocsc()
-            target = self.region_to_labelp[str(interval)]
+            target = self.region_to_label[str(interval)]
             for j, (start, stop) in enumerate(self.window_list[i]):
                 section, sec_read_ind = clean_section(methylation_matrix, start, stop)
                 if np.sum(section) == 0: #no data
