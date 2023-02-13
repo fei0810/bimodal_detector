@@ -217,9 +217,7 @@ class LeaveOneOutRunner(ConfusionRunner):
             if self.config["walk_on_list"]:
                 window_list = list(do_walk_on_list(window_list, self.config["window_size"], self.config["step_size"]))
             self.window_list.append(window_list)
-            for j, (start, stop) in enumerate(window_list):
-                self.abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], [(start, stop)])[0])
-                self.input_windows.append((interval.chrom, interval.start, interval.end))
+
 
 
     def init_samples(self):
@@ -232,7 +230,7 @@ class LeaveOneOutRunner(ConfusionRunner):
         build reference atlases for each region without each person
         :return:
         '''
-        self.refs = []
+        self.refs = defaultdict(dict)
         for i, interval in enumerate(self.interval_order):
             ref = {}
             if type(self.matrices[i]) is list and not self.matrices[i].any():
@@ -280,10 +278,12 @@ class LeaveOneOutRunner(ConfusionRunner):
                         null.fill(np.nan)
                         ref[person]["ThetaA"].append(null)
                         ref[person]["ThetaB"].append(null)
-            self.refs.append(ref)
+            self.refs[str(interval)][(start, stop)] = ref
 
     def calc_info(self, model):
         res = []
+        abs_windows = []
+        input_windows = []
         for i, interval in enumerate(self.interval_order):
             if type(self.matrices[i]) is list and not self.matrices[i].any():
                 continue
@@ -296,7 +296,7 @@ class LeaveOneOutRunner(ConfusionRunner):
                 weights = []
                 estimates = []
                 for person in self.cell_to_samples[target]:
-                    ref = self.refs[i][person]
+                    ref = self.refs[str(interval)][(start,stop)][person]
                     beta, lt, thetaA, thetaB = ref["Betas"][j],ref["Lambdas"][j],ref["ThetaA"][j],ref["ThetaB"][j]
                     meth, cov = ref["Meths"][j],ref["Covs"][j],
                     src = self.sources[i][sec_read_ind]
@@ -318,16 +318,22 @@ class LeaveOneOutRunner(ConfusionRunner):
                     null = np.zeros(len(self.cell_types))
                     null.fill(np.nan)
                     res.append(null)
+                    abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], [(start, stop)])[0])
+                    input_windows.append((interval.chrom, interval.start, interval.end))
                 else:
                     try: #TODO: fix
                         res.append(np.average(np.vstack(estimates)[has_reads,:], weights=weights[has_reads], axis=0))
+                        abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], [(start, stop)])[0])
+                        input_windows.append((interval.chrom, interval.start, interval.end))
                     except:
                         print(interval)
                         null = np.zeros(len(self.cell_types))
                         null.fill(np.nan)
                         res.append(null)
-        a = pd.DataFrame(self.input_windows, columns=["input_chrom", "input_start", "input_end"])
-        b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
+                        abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], [(start, stop)])[0])
+                        input_windows.append((interval.chrom, interval.start, interval.end))
+        a = pd.DataFrame(input_windows, columns=["input_chrom", "input_start", "input_end"])
+        b = pd.DataFrame(abs_windows, columns=["window_chrom", "window_start", "window_end"])
         c = pd.DataFrame(res, columns= self.cell_types)
 
         return pd.concat([a,b,c], axis=1)
