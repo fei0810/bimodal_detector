@@ -424,6 +424,7 @@ def epistate_plus_info(lambda_t, theta_high, theta_low, x):
     log_z = log_z - np.tile(logsumexp(log_z, axis=0), (T,1)) #T, C
     alpha = np.sum(np.exp(log_z), axis=1) #T
     alpha = alpha/np.sum(alpha) #T
+    assert len(alpha) == T
     return alpha
 
 def calc_meth_cov(x, n_cols=1):
