@@ -319,7 +319,13 @@ class LeaveOneOutRunner(ConfusionRunner):
                     null.fill(np.nan)
                     res.append(null)
                 else:
-                    res.append(np.average(np.vstack(estimates)[has_reads,:], weights=weights[has_reads], axis=0))
+                    try: #TODO: fix
+                        res.append(np.average(np.vstack(estimates)[has_reads,:], weights=weights[has_reads], axis=0))
+                    except:
+                        print(interval)
+                        null = np.zeros(len(self.cell_types))
+                        null.fill(np.nan)
+                        res.append(null)
         a = pd.DataFrame(self.input_windows, columns=["input_chrom", "input_start", "input_end"])
         b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
         c = pd.DataFrame(res, columns= self.cell_types)
