@@ -185,8 +185,8 @@ class ConfusionRunner(InfoRunner):
                 percent_single.extend(self.results[i]["percent_single"])
                 sizes.extend([end-start for (start, end) in self.results[i]["windows"]])
                 label.append(self.region_labels[i]) #TODO: fix for walk on list
-        a = pd.DataFrame(self.input_windows, columns=["input_chrom", "input_start", "input_end"])
-        b = pd.DataFrame(self.abs_windows, columns=["window_chrom", "window_start", "window_end"])
+        a = pd.DataFrame(input_windows, columns=["input_chrom", "input_start", "input_end"])
+        b = pd.DataFrame(abs_windows, columns=["window_chrom", "window_start", "window_end"])
         c = pd.DataFrame({"BIC": bic, "median_cpg": med_cpg, "percent_single":percent_single, "n_cg": sizes, "label":label})
         return pd.concat([a, b, c], axis=1)
 
@@ -467,6 +467,8 @@ def calc_beta(x, n_cols=1):
 model_to_fun = {"celfie": celfie_info, "celfie-plus": celfie_plus_info, "epistate-plus": epistate_plus_info,
                 "sum-celfie": sum_celfie_info}
 
+
+#TODO: refactor
 #%%
 
 # #%%
