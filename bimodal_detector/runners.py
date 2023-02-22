@@ -30,6 +30,8 @@ sys.path.append("/Users/ireneu/PycharmProjects/epiread-tools/") ###
 
 from epiread_tools.epiparser import EpireadReader, CoordsEpiread, epiformat_to_reader
 from epiread_tools.naming_conventions import *
+from epiread_tools.em_utils import calc_percent_U
+
 from bimodal_detector.run_em import run_em, get_all_stats, do_walk_on_list
 from bimodal_detector.filter_bic import *
 from bimodal_detector.runner_utils import *
@@ -299,6 +301,58 @@ class AtlasEstimator(Runner):
         self.save_lambda()
         self.save_thetas()
 
+class UXM_Estimator(Runner):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.labels = self.config["labels"] #one for every epiread
+        self.cell_types = self.config["cell_types"] #important to maintain order in output
+
+    def calc_u_reads(self):
+        input_windows = []
+        abs_windows = []
+        U = []
+        N = []
+        for i, interval in enumerate(self.interval_order):
+            window_list = [(0, self.matrices[i].shape[1])]
+            if self.config["walk_on_list"]:
+                window_list = list(do_walk_on_list(window_list, self.config["window_size"], self.config["step_size"]))
+            abs_windows.append(relative_intervals_to_abs(interval.chrom, self.cpgs[i], window_list))
+            input_windows.append([(interval.chrom, interval.start, interval.end)]*len(window_list))
+            for start, end in window_list:
+                mat = self.matrices[i][:,start:end].todense()
+                x_c_v = (mat != NOVAL)
+                # filter short reads
+                len_filt = (np.sum(x_c_v, axis=1).flatten() >= self.config["min_length"])
+                # count U per cell type
+                source_labels = np.array(self.labels)[self.sources[i] - 1]
+                percent_u = np.zeros(len(self.cell_types))
+                n_fragments = np.zeros(len(self.cell_types))
+                if len_filt.sum():
+                    for j, cell in enumerate(self.cell_types):
+                        cell_filt = np.ravel(len_filt&(source_labels==cell))
+                        small = mat[cell_filt,:]
+                        if not small.shape[0]: #empty region
+                            continue
+                        percent_u[j] = calc_percent_U(small, u_threshold=self.config["u_threshold"])
+                        n_fragments[j] = small.shape[0]
+                U.append(percent_u)
+                N.append(n_fragments)
+
+
+        output_array = np.hstack([np.vstack(input_windows),
+                                  np.vstack(abs_windows),
+                                  np.vstack(U),
+                                  np.vstack(N)
+                                  ])
+        header = TAB.join(self.cell_types)
+        with open(os.path.join(self.outdir, str(self.name) + "_percent_U.bedgraph"), "w") as outfile:
+            np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s', header='chrom\tstart\tend\tchrom\tstart\tend\t'+header+"\t"+header)
+
+    def run(self):
+        self.read()
+        self.calc_u_reads()
+
+
 
 
 
@@ -341,11 +395,8 @@ class AtlasEstimator(Runner):
 #           'Pancreas-Delta', 'Pancreas-Delta', 'Pancreas-Delta', 'Pancreas-Duct', 'Pancreas-Duct',
 #     'Pancreas-Duct','Pancreas-Duct', 'Endothelium','Endothelium','Endothelium'],
 # "person_id":[],
-# "cell_types" : ['Liver-Hep', 'Lung-Ep-Alveo', 'Skeletal-Musc', 'Blood-T', 'Eryth-prog',
-#           'Colon-Ep', 'Neuron', 'Blood-NK', 'Pancreas-Delta', 'Oligodend', 'Pancreas-Acinar',
-#          'Blood-B', 'Pancreas-Beta', 'Bladder-Ep', 'Smooth-Musc',
-#           'Kidney-Ep', 'Pancreas-Duct', 'Pancreas-Alpha', 'Thyroid-Ep', 'Heart-Cardio',
-#           'Endothelium', 'Prostate-Ep', 'Gastric-Ep', 'Blood-Granul', 'Blood-Mono+Macro'],
+# "cell_types" : ['Pancreas-Acinar', 'Pancreas-Beta', 'Pancreas-Duct', 'Pancreas-Alpha',
+#           'Endothelium', 'Pancreas-Delta'],
 #           "models": ["epistate-plus", "celfie-plus", "celfie"],
 #   "outdir": "/Users/ireneu/PycharmProjects/bimodal_detector/results/",
 #   "epiformat": "old_epiread_A",
@@ -358,7 +409,9 @@ class AtlasEstimator(Runner):
 #   "window_size": 5,
 #   "step_size": 1,
 #           "bic_threshold":np.inf,
-#     "name": "Loyfer25",
+#           "min_length":4,
+#           "u_threshold":0.25,
+#     "name": "test_uxm",
 #   "logfile": "log.log"}
-# runner = AtlasEstimator(config)
+# runner = UXM_Estimator(config)
 # runner.run()
