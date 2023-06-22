@@ -343,7 +343,7 @@ class UXM_Estimator(Runner):
         output_array = np.hstack([np.vstack(input_windows),
                                   np.vstack(abs_windows),
                                   np.vstack(U),
-                                  np.vstack(N)
+                                  # np.vstack(N)
                                   ])
         header = TAB.join(self.cell_types)
         with open(os.path.join(self.outdir, str(self.name) + "_percent_U.bedgraph"), "w") as outfile:
