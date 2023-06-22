@@ -28,7 +28,8 @@ import numpy as np
 sys.path.append("/Users/ireneu/PycharmProjects/bimodal_detector/") ###
 sys.path.append("/Users/ireneu/PycharmProjects/epiread-tools/") ###
 
-from epiread_tools.epiparser import EpireadReader, CoordsEpiread, epiformat_to_reader
+from epiread_tools.epiparser import EpireadReader, CoordsEpiread
+from epiread_tools.epiformat import epiformat_to_reader
 from epiread_tools.naming_conventions import *
 from epiread_tools.em_utils import calc_percent_U
 
@@ -358,60 +359,3 @@ class UXM_Estimator(Runner):
 
 #%%
 
-# #TODO:
-# handle SNPS?
-# add get PP option
-# implement two-step
-# implement param estimation
-# add logging
-# add tests
-
-# config = {"genomic_intervals": '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/040223_U25_25_merged_regions_file.bed',
-#   "cpg_coordinates": "/Users/ireneu/PycharmProjects/old_in-silico_deconvolution/debugging/hg19.CpG.bed.sorted.gz",
-#   "epiread_files": ['/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z000000QX.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043W.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043X.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Acinar-Z0000043Y.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000453.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000456.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Alpha-Z00000459.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000452.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000455.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Beta-Z00000458.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000451.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000454.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Delta-Z00000457.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z000000QZ.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043T.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043U.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Duct-Z0000043V.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042D.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z0000042X.epiread.gz',
-# '/Users/ireneu/PycharmProjects/bimodal_detector/tests/data/sorted_Pancreas-Endothel-Z00000430.epiread.gz'
-#                     ],
-# "region_labels":"",
-# "labels":['Pancreas-Acinar', 'Pancreas-Acinar', 'Pancreas-Acinar', 'Pancreas-Acinar', 'Pancreas-Alpha',
-#           'Pancreas-Alpha', 'Pancreas-Alpha', 'Pancreas-Beta', 'Pancreas-Beta','Pancreas-Beta',
-#           'Pancreas-Delta', 'Pancreas-Delta', 'Pancreas-Delta', 'Pancreas-Duct', 'Pancreas-Duct',
-#     'Pancreas-Duct','Pancreas-Duct', 'Endothelium','Endothelium','Endothelium'],
-# "person_id":[],
-# "cell_types" : ['Pancreas-Acinar', 'Pancreas-Beta', 'Pancreas-Duct', 'Pancreas-Alpha',
-#           'Endothelium', 'Pancreas-Delta'],
-#           "models": ["epistate-plus", "celfie-plus", "celfie"],
-#   "outdir": "/Users/ireneu/PycharmProjects/bimodal_detector/results/",
-#   "epiformat": "old_epiread_A",
-#   "header": False,
-#   "bedfile": True,
-#   "parse_snps": False,
-#     "get_pp":False,
-#   "walk_on_list": False,
-#     "verbose" : False,
-#   "window_size": 5,
-#   "step_size": 1,
-#           "bic_threshold":np.inf,
-#           "min_length":4,
-#           "u_threshold":0.25,
-#     "name": "test_uxm",
-#   "logfile": "log.log"}
-# runner = UXM_Estimator(config)
-# runner.run()

@@ -223,24 +223,4 @@ class two_epistate_EM:
         prior on state A
         '''
         return self.mu_A
-#%%
-def main():
-    SAMPLE_DATA = "sample2.csv"
-
-    initial_low = 0.2
-    initial_high = 0.8
-    state_prior = 0.5
-    em = two_epistate_EM(SAMPLE_DATA,initial_high, initial_low, state_prior,
-                         0.1, 10, read_from_file=True, verbose=True)
-    em.run_em()
-    double_ll = em.get_ll()
-    #run single state
-    data = pd.read_csv(SAMPLE_DATA, header=None)
-    max_m, WINDOW_SIZE = data.shape
-    single_ll = max_single_epistate_ll(data)
-    print("single", single_ll)
-    print(is_ASM(single_ll, double_ll, max_m, WINDOW_SIZE))
-    print(em.get_read_labels())
-
-if __name__ == "__main__":
-    main()
+#
