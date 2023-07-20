@@ -347,7 +347,7 @@ class UXM_Estimator(Runner):
                                   ])
         header = TAB.join(self.cell_types)
         with open(os.path.join(self.outdir, str(self.name) + "_percent_U.bedgraph"), "w") as outfile:
-            np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s', header='chrom\tstart\tend\tchrom\tstart\tend\t'+header+"\t"+header)
+            np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s', header='chrom\tstart\tend\tchrom\tstart\tend\t'+header)
 
     def run(self):
         self.read()
