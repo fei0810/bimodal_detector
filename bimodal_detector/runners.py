@@ -211,6 +211,7 @@ class ParamEstimator(Runner):
         b = np.hstack(bics)
         c = np.hstack(pp_vecs)
         output_array = np.column_stack((a, b.reshape(-1,1), c.reshape(-1,1)))
+        #
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_step_1.csv.gz"), "a") as outfile:
             np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
 
