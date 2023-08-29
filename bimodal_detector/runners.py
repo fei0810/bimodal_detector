@@ -52,6 +52,7 @@ class Runner:
         if self.config["verbose"]:
             self.init_logger()
         self.results, self.stats = [], []
+        self.get_pp = False
 
     def init_logger(self, level=logging.DEBUG):
         logger = logging.getLogger(self.name)
@@ -79,7 +80,7 @@ class Runner:
                 self.window_list = list(do_walk_on_list(self.window_list, self.config["window_size"], self.config["step_size"]))
             em_results = run_em(self.matrices[i], self.window_list)
             stats = get_all_stats(em_results["Indices"], em_results["Probs"], dict(zip(np.arange(len(self.sources[i])), self.sources[i])),
-                                  len(self.config["epiread_files"]), self.config["get_pp"])
+                                  len(self.config["epiread_files"]), self.get_pp)
             self.results.append(em_results)
             self.stats.append(stats)
 
@@ -191,10 +192,27 @@ class ParamEstimator(Runner):
         self.get_pp = True
 
     def write_minimal_output(self):
-        print("hi")
-        # with gzip.open(os.path.join(self.outdir, str(self.name) + "_step_1.csv.gz"), "a") as outfile:
-        #     np.savetxt(outfile, self.minimal_output, delimiter=TAB, fmt='%s')
-        pass
+        '''
+        The output needed to run step_1_report
+        win start, win end, BIC, mean_pp_vec
+        :return:
+        '''
+        rel_ind = 0
+        rel_windows = []
+        bics = []
+        pp_vecs = []
+        for i, interval in enumerate(self.interval_order):
+            if "windows" in self.results[i] and self.results[i]["windows"]: #any results
+                rel_windows.append(*[(x+rel_ind, y+rel_ind) for x,y in self.results[i]["windows"]])
+                bics.append(self.results[i]["BIC"])
+                rel_ind = rel_windows[-1][-1]
+                pp_vecs.append(self.stats[i][0,0,-1])
+        a = np.vstack(rel_windows)
+        b = np.hstack(bics)
+        c = np.hstack(pp_vecs)
+        output_array = np.column_stack((a, b.reshape(-1,1), c.reshape(-1,1)))
+        with gzip.open(os.path.join(self.outdir, str(self.name) + "_step_1.csv.gz"), "a") as outfile:
+            np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
 
     def run(self):
         self.read()
@@ -352,15 +370,16 @@ class UXM_Estimator(Runner):
 
 #%%
 
-config = {"cpg_coordinates": "demo/hg19.CpG.bed.sorted.gz", "bedfile":True,
-          "genomic_intervals":"/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_merged_regions_file.bed",
-          "outfile":"/Users/ireneu/berman_lab/ALS/test.bedgraph",
-          "epiformat":"old_epiread_A", "header":False, "epiread_files":["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_4_rep15_mixture.epiread.gz"],
-          "atlas_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_atlas_over_regions.txt",
-            "percent_u": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_percent_U.bedgraph",
-  "num_iterations": 10, "stop_criterion": 1e-05, "random_restarts": 1, "summing":False,
-          "min_length":1, "u_threshold":0.25, "npy":False, "weights":False, "minimal_cpg_per_read":1
-          }
-
-em_model = CelfieISH(config)
-em_model.run_model()
+# config = {"cpg_coordinates": "/Users/ireneu/PycharmProjects/deconvolution_models/demo/hg19.CpG.bed.sorted.gz", "bedfile":True,
+#           "genomic_intervals":"/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_merged_regions_file.bed",
+#           "outdir":"/Users/ireneu/berman_lab/ALS/",
+#           "epiformat":"old_epiread_A", "header":False, "epiread_files":["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_4_rep15_mixture.epiread.gz"],
+#           "atlas_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_atlas_over_regions.txt",
+#             "percent_u": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_percent_U.bedgraph",
+#   "num_iterations": 10, "stop_criterion": 1e-05, "random_restarts": 1, "summing":False,
+#           "min_length":1, "u_threshold":0.25, "npy":False, "weights":False, "minimal_cpg_per_read":1,
+#           "name":"banana", "verbose":False, "walk_on_list":False
+#           }
+#
+# runner = ParamEstimator(config)
+# runner.run()
