@@ -210,10 +210,12 @@ class ParamEstimator(Runner):
         a = np.vstack(rel_windows)
         b = np.hstack(bics)
         c = np.hstack(pp_vecs)
-        # output_array = np.column_stack((a, b.reshape(-1,1), c.reshape(-1,1)))
-        output_json = {"rel_start": a[:,0].tolist(), "rel_end":a[:,1].tolist(), "BIC":b.tolist(), "pp":c.tolist()} #make it json compatible
-        with open(os.path.join(self.outdir, str(self.name) + "_step_1.json"), "a+") as outfile:
-            json.dump(output_json, outfile)
+        output_array = np.column_stack((a, b.reshape(-1,1), c.reshape(-1,1)))
+        # output_json = {"rel_start": a[:,0].tolist(), "rel_end":a[:,1].tolist(), "BIC":b.tolist(), "pp":c.tolist()} #make it json compatible
+        # with open(os.path.join(self.outdir, str(self.name) + "_step_1.json"), "a+") as outfile:
+        #     json.dump(output_json, outfile)
+        with gzip.open(os.path.join(self.outdir, str(self.name) + "_step_1.csv.gz"), "a+") as outfile:
+            np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
 
     def run(self):
         self.read()
