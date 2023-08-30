@@ -210,10 +210,10 @@ class ParamEstimator(Runner):
         a = np.vstack(rel_windows)
         b = np.hstack(bics)
         c = np.hstack(pp_vecs)
-        output_array = np.column_stack((a, b.reshape(-1,1), c.reshape(-1,1)))
-        #
-        with gzip.open(os.path.join(self.outdir, str(self.name) + "_step_1.csv.gz"), "a+") as outfile:
-            np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
+        # output_array = np.column_stack((a, b.reshape(-1,1), c.reshape(-1,1)))
+        output_json = {"rel_start": a[:,0].tolist(), "rel_end":a[:,1].tolist(), "BIC":b.tolist(), "pp":c.tolist()} #make it json compatible
+        with open(os.path.join(self.outdir, str(self.name) + "_step_1.json"), "a+") as outfile:
+            json.dump(output_json, outfile)
 
     def run(self):
         self.read()
@@ -375,7 +375,7 @@ class UXM_Estimator(Runner):
 #           "bedfile":False,
 #           "genomic_intervals":["chr1:1045636:1045789", "chr1:1095821-1096180"],
 #           # "genomic_intervals":"/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_merged_regions_file.bed",
-#           "outdir":"/Users/ireneu/berman_lab/ALS/",
+#           "outdir":"/Users/ireneu/PycharmProjects/bimodal_detector/results",
 #           "epiformat":"old_epiread_A", "header":False, "epiread_files":["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_4_rep15_mixture.epiread.gz"],
 #           "atlas_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_atlas_over_regions.txt",
 #             "percent_u": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_percent_U.bedgraph",
