@@ -53,6 +53,7 @@ class Runner:
             self.init_logger()
         self.results, self.stats = [], []
         self.get_pp = False
+        self.n_sources = len(self.config["epiread_files"])
 
     def init_logger(self, level=logging.DEBUG):
         logger = logging.getLogger(self.name)
@@ -80,7 +81,7 @@ class Runner:
                 self.window_list = list(do_walk_on_list(self.window_list, self.config["window_size"], self.config["step_size"]))
             em_results = run_em(self.matrices[i], self.window_list)
             stats = get_all_stats(em_results["Indices"], em_results["Probs"], dict(zip(np.arange(len(self.sources[i])), self.sources[i])),
-                                  len(self.config["epiread_files"]), self.get_pp)
+                                  self.n_sources, self.get_pp)
             self.results.append(em_results)
             self.stats.append(stats)
 
@@ -207,11 +208,7 @@ class ParamEstimator(Runner):
                 bics.extend(self.results[i]["BIC"])
                 rel_ind = rel_windows[-1][-1]
                 pp_vecs.append(self.stats[i][:,:,-2]) #mean pp per cell type
-        '''
-        don't keep posterior probability
-        add option to group sources
-        change this: dict(zip(np.arange(len(self.sources[i])), self.sources[i]) in em_all to group sources
-        '''
+
         a = np.vstack(rel_windows)
         b = np.hstack(bics)
         c = np.hstack(pp_vecs)
@@ -235,7 +232,7 @@ class ParamEstimator(Runner):
         for s in self.sources:
             new_sources.append(np.vectorize(fun)(s))
         self.sources = new_sources
-
+        self.n_sources = len(set(self.groups))
 
     def run(self):
         self.read()
@@ -396,11 +393,12 @@ class UXM_Estimator(Runner):
 #
 # config = {"cpg_coordinates": "/Users/ireneu/PycharmProjects/deconvolution_models/demo/hg19.CpG.bed.sorted.gz",
 #           "bedfile":False,
-#           "genomic_intervals":["chr1:1045636:1045789", "chr1:1095821-1096180", "chr1:1095821-1096180"],
+#           "genomic_intervals":["chr1:1045636:1045789", "chr1:1095821-1096180"],
 #           # "genomic_intervals":"/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_merged_regions_file.bed",
 #           "outdir":"/Users/ireneu/PycharmProjects/bimodal_detector/results",
-#           "epiformat":"old_epiread_A", "header":False, "epiread_files":["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_4_rep15_mixture.epiread.gz"],
-#           "groups": ["banana"],
+#           "epiformat":"old_epiread_A", "header":False, "epiread_files":["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_4_rep15_mixture.epiread.gz",
+#                                                                         "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_3_rep15_mixture.epiread.gz"],
+#           "groups": ["banana", "apple"],
 #           "atlas_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_atlas_over_regions.txt",
 #             "percent_u": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_percent_U.bedgraph",
 #   "num_iterations": 10, "stop_criterion": 1e-05, "random_restarts": 1, "summing":False,
