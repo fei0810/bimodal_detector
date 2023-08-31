@@ -189,7 +189,7 @@ class ParamEstimator(Runner):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.get_pp = True
+        self.groups = self.config["groups"]
 
     def write_minimal_output(self):
         '''
@@ -206,19 +206,40 @@ class ParamEstimator(Runner):
                 rel_windows.extend([(x+rel_ind, y+rel_ind) for x,y in self.results[i]["windows"]])
                 bics.extend(self.results[i]["BIC"])
                 rel_ind = rel_windows[-1][-1]
-                pp_vecs.append(self.stats[i][0,:,-1])
+                pp_vecs.append(self.stats[i][:,:,-2]) #mean pp per cell type
+        '''
+        don't keep posterior probability
+        add option to group sources
+        change this: dict(zip(np.arange(len(self.sources[i])), self.sources[i]) in em_all to group sources
+        '''
         a = np.vstack(rel_windows)
         b = np.hstack(bics)
         c = np.hstack(pp_vecs)
-        output_array = np.column_stack((a, b.reshape(-1,1), c.reshape(-1,1)))
-        # output_json = {"rel_start": a[:,0].tolist(), "rel_end":a[:,1].tolist(), "BIC":b.tolist(), "pp":c.tolist()} #make it json compatible
-        # with open(os.path.join(self.outdir, str(self.name) + "_step_1.json"), "a+") as outfile:
-        #     json.dump(output_json, outfile)
+        output_array = np.column_stack((a, b.reshape(-1,1), c.T))
+        format_str = ['%d', '%d', '%d']+[ '%.3f']*(output_array.shape[1]-3)
+
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_step_1.csv.gz"), "a+") as outfile:
-            np.savetxt(outfile, output_array, delimiter=TAB, fmt='%s')
+            np.savetxt(outfile, output_array, delimiter=TAB, fmt=format_str)
+
+    def group_sources(self):
+        '''
+        sources are vectors of which file each read came from
+        we need to turn it to a list of groups
+        These are all 1 based not to interfere with the "ALL" group
+        :return:
+        '''
+        epiread_number_to_group = dict(enumerate(self.groups, start=1))
+        group_to_group_number = {group: index for index, group in enumerate(set(self.groups), start=1)}
+        fun = lambda x: group_to_group_number[epiread_number_to_group[x]]
+        new_sources = []
+        for s in self.sources:
+            new_sources.append(np.vectorize(fun)(s))
+        self.sources = new_sources
+
 
     def run(self):
         self.read()
+        self.group_sources()
         self.em_all()
         self.write_minimal_output()
 
@@ -373,18 +394,19 @@ class UXM_Estimator(Runner):
 
 #%%
 
-# config = {"cpg_coordinates": "/Users/ireneu/PycharmProjects/deconvolution_models/demo/hg19.CpG.bed.sorted.gz",
-#           "bedfile":False,
-#           "genomic_intervals":["chr1:1045636:1045789", "chr1:1095821-1096180"],
-#           # "genomic_intervals":"/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_merged_regions_file.bed",
-#           "outdir":"/Users/ireneu/PycharmProjects/bimodal_detector/results",
-#           "epiformat":"old_epiread_A", "header":False, "epiread_files":["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_4_rep15_mixture.epiread.gz"],
-#           "atlas_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_atlas_over_regions.txt",
-#             "percent_u": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_percent_U.bedgraph",
-#   "num_iterations": 10, "stop_criterion": 1e-05, "random_restarts": 1, "summing":False,
-#           "min_length":1, "u_threshold":0.25, "npy":False, "weights":False, "minimal_cpg_per_read":1,
-#           "name":"banana", "verbose":False, "walk_on_list":True, "window_size":3, "step_size":1
-#           }
-#
-# runner = ParamEstimator(config)
-# runner.run()
+config = {"cpg_coordinates": "/Users/ireneu/PycharmProjects/deconvolution_models/demo/hg19.CpG.bed.sorted.gz",
+          "bedfile":False,
+          "genomic_intervals":["chr1:1045636:1045789", "chr1:1095821-1096180", "chr1:1095821-1096180"],
+          # "genomic_intervals":"/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_merged_regions_file.bed",
+          "outdir":"/Users/ireneu/PycharmProjects/bimodal_detector/results",
+          "epiformat":"old_epiread_A", "header":False, "epiread_files":["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_4_rep15_mixture.epiread.gz"],
+          "groups": ["banana"],
+          "atlas_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_atlas_over_regions.txt",
+            "percent_u": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_percent_U.bedgraph",
+  "num_iterations": 10, "stop_criterion": 1e-05, "random_restarts": 1, "summing":False,
+          "min_length":1, "u_threshold":0.25, "npy":False, "weights":False, "minimal_cpg_per_read":1,
+          "name":"banana", "verbose":False, "walk_on_list":True, "window_size":5, "step_size":1
+          }
+
+runner = ParamEstimator(config)
+runner.run()

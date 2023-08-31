@@ -206,7 +206,8 @@ def get_source_stats(source_probs):
     summarize probs
     :param source_probs: np array of posterior probabilities
     :param pp: whether to output the raw probabilities
-    :return: summary statistics
+    :return: summary statistics:
+    n_reads, state A reads, state B reads, reads > 0.5, mean_pp, stdev
     '''
     stats = np.array([len(source_probs), np.sum(source_probs>upper_conf_thresh),
              np.sum(source_probs < lower_conf_thresh),np.sum(source_probs>0.5),
