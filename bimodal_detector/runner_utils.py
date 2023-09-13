@@ -36,7 +36,7 @@ def format_array(array):
     :param array: np array
     :return: array formatted for output
     '''
-    return np.array2string(array, max_line_width=np.inf,separator=",", precision=3, threshold=np.inf)
+    return np.array2string(array, max_line_width=np.inf,separator=",", precision=3, threshold=np.inf, suppress_small=True)
 
 def relative_intervals_to_abs(chrom, cpgs, rel_intervals):
     '''

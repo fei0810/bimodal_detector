@@ -192,7 +192,7 @@ class ParamEstimator(Runner):
         super().__init__(*args, **kwargs)
         self.groups = self.config["groups"]
 
-    def write_minimal_output(self):
+    def write_output(self):
         '''
         The output needed to run step_1_report
         win start, win end, BIC, mean_pp_vec
@@ -238,7 +238,7 @@ class ParamEstimator(Runner):
         self.read()
         self.group_sources()
         self.em_all()
-        self.write_minimal_output()
+        self.write_output()
 
 class TwoStepRunner(Runner):
 
@@ -390,21 +390,3 @@ class UXM_Estimator(Runner):
 
 
 #%%
-#
-# config = {"cpg_coordinates": "/Users/ireneu/PycharmProjects/deconvolution_models/demo/hg19.CpG.bed.sorted.gz",
-#           "bedfile":False,
-#           "genomic_intervals":["chr1:1045636:1045789", "chr1:1095821-1096180"],
-#           # "genomic_intervals":"/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_merged_regions_file.bed",
-#           "outdir":"/Users/ireneu/PycharmProjects/bimodal_detector/results",
-#           "epiformat":"old_epiread_A", "header":False, "epiread_files":["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_4_rep15_mixture.epiread.gz",
-#                                                                         "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_3_rep15_mixture.epiread.gz"],
-#           "groups": ["banana", "apple"],
-#           "atlas_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_atlas_over_regions.txt",
-#             "percent_u": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_percent_U.bedgraph",
-#   "num_iterations": 10, "stop_criterion": 1e-05, "random_restarts": 1, "summing":False,
-#           "min_length":1, "u_threshold":0.25, "npy":False, "weights":False, "minimal_cpg_per_read":1,
-#           "name":"banana", "verbose":False, "walk_on_list":True, "window_size":5, "step_size":1
-#           }
-#
-# runner = ParamEstimator(config)
-# runner.run()
