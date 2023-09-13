@@ -78,7 +78,7 @@ class OneStepRunner(ParamEstimator):
 
         # Define the format string for each column
         format_str = ['%s', '%d', '%d', '%d', '%d', '%.3f', '%s', '%s', '%s'] + ['%s'] * (output_array.shape[1] - 9)
-        with gzip.open(os.path.join(self.outdir, str(self.name) + "_EM_results.csv.gz"), "a+") as outfile:
+        with gzip.open(os.path.join(self.outdir, str(self.name) + "_EM_results.tsv.gz"), "a+") as outfile:
             np.savetxt(outfile, output_array, delimiter=TAB, fmt=format_str)
 
 
