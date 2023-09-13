@@ -28,6 +28,14 @@ class OneStepRunner(ParamEstimator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def handle_empty_output(self):
+        '''
+        create empty files for snakemake
+        :return:
+        '''
+        with gzip.open(os.path.join(self.outdir, str(self.name) + "_EM_results.tsv.gz"), "a+") as outfile:
+            pass
+
     def write_output(self):
         '''
         chr start end BIC stateA stateB n_read n>0.9, n<0.1, n>0.5, pp_mean, pp_stdev
@@ -55,7 +63,8 @@ class OneStepRunner(ParamEstimator):
                     win_end.append(self.cpgs[i][y-1]+1)#end of last cpg
                     win_stats = self.stats[i][:,j,:]
                     stats.append('\t'.join([format_array(row) for row in win_stats.transpose()]))
-
+        if not chrom:# empty
+            self.handle_empty_output()
 
         combined_chrom = np.hstack(chrom)
         combined_interval_start = np.hstack(interval_start)
@@ -76,6 +85,7 @@ class OneStepRunner(ParamEstimator):
                                         combined_win_start, combined_win_end, combined_bics, combined_stateA,
                                         combined_stateB, combined_stats))
 
+
         # Define the format string for each column
         format_str = ['%s', '%d', '%d', '%d', '%d', '%.3f', '%s', '%s', '%s'] + ['%s'] * (output_array.shape[1] - 9)
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_EM_results.tsv.gz"), "a+") as outfile:
@@ -85,20 +95,20 @@ class OneStepRunner(ParamEstimator):
 
 
 #
-# config = {"cpg_coordinates": "/Users/ireneu/PycharmProjects/deconvolution_models/demo/hg19.CpG.bed.sorted.gz",
-#           "bedfile":False,
-#           "genomic_intervals":["chr1:1045636:1045789", "chr1:1095821-1096180"],
-#           # "genomic_intervals":"/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_merged_regions_file.bed",
-#           "outdir":"/Users/ireneu/PycharmProjects/bimodal_detector/results",
-#           "epiformat":"old_epiread_A", "header":False, "epiread_files":["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_4_rep15_mixture.epiread.gz",
-#                                                                         "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_3_rep15_mixture.epiread.gz"],
-#           "groups": ["banana", "apple"],
-#           "atlas_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_atlas_over_regions.txt",
-#             "percent_u": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_percent_U.bedgraph",
-#   "num_iterations": 10, "stop_criterion": 1e-05, "random_restarts": 1, "summing":False,
-#           "min_length":1, "u_threshold":0.25, "npy":False, "weights":False, "minimal_cpg_per_read":1,
-#           "name":"banana", "verbose":False, "walk_on_list":True, "window_size":5, "step_size":1
-#           }
-#
-# runner = OneStepRunner(config)
-# runner.run()
+config = {"cpg_coordinates": "/Users/ireneu/PycharmProjects/deconvolution_models/demo/hg19.CpG.bed.sorted.gz",
+          "bedfile":False,
+          "genomic_intervals":["chr1:1045636:1045789", "chr1:1095821-1096180"],
+          # "genomic_intervals":"/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_merged_regions_file.bed",
+          "outdir":"/Users/ireneu/PycharmProjects/bimodal_detector/results",
+          "epiformat":"old_epiread_A", "header":False, "epiread_files":["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_4_rep15_mixture.epiread.gz",
+                                                                        "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_3_rep15_mixture.epiread.gz"],
+          "groups": ["banana", "apple"],
+          "atlas_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_atlas_over_regions.txt",
+            "percent_u": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_percent_U.bedgraph",
+  "num_iterations": 10, "stop_criterion": 1e-05, "random_restarts": 1, "summing":False,
+          "min_length":1, "u_threshold":0.25, "npy":False, "weights":False, "minimal_cpg_per_read":1,
+          "name":"banana", "verbose":False, "walk_on_list":True, "window_size":5, "step_size":1
+          }
+
+runner = OneStepRunner(config)
+runner.run()

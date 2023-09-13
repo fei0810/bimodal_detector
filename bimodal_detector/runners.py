@@ -77,7 +77,7 @@ class Runner:
     def em_all(self):
         for i, interval in enumerate(self.interval_order): #interval should never span more than 1 chromosome
             self.window_list = [(0, self.matrices[i].shape[1])]
-            if self.config["walk_on_list"]:
+            if self.config["walk_on_list"] is True:
                 self.window_list = list(do_walk_on_list(self.window_list, self.config["window_size"], self.config["step_size"]))
             em_results = run_em(self.matrices[i], self.window_list)
             stats = get_all_stats(em_results["Indices"], em_results["Probs"], dict(zip(np.arange(len(self.sources[i])), self.sources[i])),
@@ -223,10 +223,14 @@ class ParamEstimator(Runner):
         sources are vectors of which file each read came from
         we need to turn it to a list of groups
         These are all 1 based not to interfere with the "ALL" group
+        0: ALL
+        -1: empty interval
         :return:
         '''
         epiread_number_to_group = dict(enumerate(self.groups, start=1))
         group_to_group_number = {group: index for index, group in enumerate(set(self.groups), start=1)}
+        epiread_number_to_group[-1] = -1 #for empty
+        group_to_group_number[-1] = -1 #for empty
         fun = lambda x: group_to_group_number[epiread_number_to_group[x]]
         new_sources = []
         for s in self.sources:
