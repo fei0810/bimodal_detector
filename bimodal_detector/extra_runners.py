@@ -81,15 +81,12 @@ class OneStepRunner(ParamEstimator):
         combined_stats = np.hstack(stats)
 
         # Column stack the combined variables
-        output_array = np.column_stack((combined_chrom, combined_interval_start, combined_interval_end,
-                                        combined_win_start, combined_win_end, combined_bics, combined_stateA,
-                                        combined_stateB, combined_stats))
+        output_array = np.column_stack((combined_chrom.astype(str), combined_interval_start.astype(int), combined_interval_end.astype(int),
+                                        combined_win_start.astype(int), combined_win_end.astype(int), combined_bics.astype(float), combined_stateA.astype(str),
+                                        combined_stateB.astype(str), combined_stats.astype(str)))
 
-
-        # Define the format string for each column
-        format_str = ['%s', '%d', '%d', '%d', '%d', '%.3f', '%s', '%s', '%s'] + ['%s'] * (output_array.shape[1] - 9)
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_EM_results.tsv.gz"), "a+") as outfile:
-            np.savetxt(outfile, output_array, delimiter=TAB, fmt=format_str)
+            np.savetxt(outfile, output_array, delimiter=TAB, fmt="%s")
 
 
 
