@@ -38,6 +38,13 @@ class OneStepRunner(ParamEstimator):
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_EM_results.tsv.gz"), "a+") as outfile:
             pass
 
+    def write_header(self):
+        columns = ["chrom", "start", "end", "CpG_start", "CpG_end", "BIC", "stateA","stateB",
+                   "n_reads", "state A reads", "state B reads", "reads > 0.5", "mean_pp", "stdev"]
+        with open(os.path.join(self.outdir, str(self.name) + "_EM_header.txt"), "a+") as outfile:
+            outfile.write("\t".join(columns)+"\n")
+            outfile.write("ALL\t"+"\t".join(self.group_set))
+
     def write_output(self):
         '''
         chr start end BIC stateA stateB n_read n>0.9, n<0.1, n>0.5, pp_mean, pp_stdev
@@ -65,9 +72,12 @@ class OneStepRunner(ParamEstimator):
                     win_end.append(self.cpgs[i][y-1]+1)#end of last cpg
                     win_stats = self.stats[i][:,j,:]
                     stats.append('\t'.join([format_array(row) for row in win_stats.transpose()]))
+        self.write_header()
+
         if not chrom:# empty
             self.handle_empty_output()
             return
+
 
         combined_chrom = np.hstack(chrom)
         combined_interval_start = np.hstack(interval_start)
@@ -95,24 +105,24 @@ class OneStepRunner(ParamEstimator):
 
 
 #%%
-# groups = pd.read_csv("/Users/ireneu/PycharmProjects/IntervalEM/resources/local_group_file.txt", names=["file", "group"], header=None)
-# config = {"cpg_coordinates": "/Users/ireneu/PycharmProjects/deconvolution_models/demo/hg19.CpG.bed.sorted.gz",
-#           "bedfile":True,
-#           "genomic_intervals":"/Users/ireneu/PycharmProjects/IntervalEM/resources/chunk_967.bed",
-#           # "genomic_intervals":"/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_merged_regions_file.bed",
-#           "outdir":"/Users/ireneu/PycharmProjects/bimodal_detector/results",
-#           "epiformat":"old_epiread_A", "header":False,
-#           "epiread_files":groups["file"].values.tolist(),
-#           "groups":groups["group"].values.tolist(),
-#           #"epiread_files":["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_4_rep15_mixture.epiread.gz",
-#                                                                         #"/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_3_rep15_mixture.epiread.gz"],
-#           #"groups": ["banana", "apple"],
-#          # "atlas_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_atlas_over_regions.txt",
-#         #    "percent_u": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_percent_U.bedgraph",
-#   #"num_iterations": 10, "stop_criterion": 1e-05, "random_restarts": 1, "summing":False,
-#           "min_length":1, "u_threshold":0.25, "npy":False, "weights":False, "minimal_cpg_per_read":1,
-#           "name":"chunk_967", "verbose":False, "walk_on_list":False #, "window_size":5, "step_size":1
-#           }
-#
-# runner = OneStepRunner(config)
-# runner.run()
+groups = pd.read_csv("/Users/ireneu/PycharmProjects/IntervalEM/resources/local_group_file.txt", names=["file", "group"], header=None)
+config = {"cpg_coordinates": "/Users/ireneu/PycharmProjects/deconvolution_models/demo/hg19.CpG.bed.sorted.gz",
+          "bedfile":True,
+          "genomic_intervals":"/Users/ireneu/PycharmProjects/IntervalEM/resources/chunk_967.bed",
+          # "genomic_intervals":"/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_merged_regions_file.bed",
+          "outdir":"/Users/ireneu/PycharmProjects/bimodal_detector/results",
+          "epiformat":"old_epiread_A", "header":False,
+          "epiread_files":groups["file"].values.tolist(),
+          "groups":groups["group"].values.tolist(),
+          #"epiread_files":["/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_4_rep15_mixture.epiread.gz",
+                                                                        #"/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_3_rep15_mixture.epiread.gz"],
+          #"groups": ["banana", "apple"],
+         # "atlas_file": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_atlas_over_regions.txt",
+        #    "percent_u": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/sensitivity_200723_U250_percent_U.bedgraph",
+  #"num_iterations": 10, "stop_criterion": 1e-05, "random_restarts": 1, "summing":False,
+          "min_length":1, "u_threshold":0.25, "npy":False, "weights":False, "minimal_cpg_per_read":1,
+          "name":"chunk_967", "verbose":False, "walk_on_list":False #, "window_size":5, "step_size":1
+          }
+
+runner = OneStepRunner(config)
+runner.run()

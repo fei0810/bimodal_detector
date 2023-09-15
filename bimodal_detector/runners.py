@@ -228,7 +228,8 @@ class ParamEstimator(Runner):
         :return:
         '''
         epiread_number_to_group = dict(enumerate(self.groups, start=1))
-        group_to_group_number = {group: index for index, group in enumerate(set(self.groups), start=1)}
+        self.group_set = sorted(set(self.groups)) #sorted to make sure it's the same across chunks
+        group_to_group_number = {group: index for index, group in enumerate(self.group_set, start=1)}
         epiread_number_to_group[-1] = -1 #for empty
         group_to_group_number[-1] = -1 #for empty
         fun = lambda x: group_to_group_number[epiread_number_to_group[x]]
