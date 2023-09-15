@@ -226,7 +226,7 @@ def run_em_on_window(n_cpgs, max_m, read_data, initial_high, initial_low):
     :return: window BIC score, read labels, state thethas and
     posterior probability for state A
     '''
-    em = two_epistate_EM(read_data, initial_high, initial_low, 0.5, 0.1, 10, use_theta_convergence=True)
+    em = two_epistate_EM(read_data, initial_high, initial_low, 0.5, convergence_thr=0.1, max_iteration=10, use_theta_convergence=True)
     em.run_em()
     double_ll = em.get_ll()
     single_ll = max_single_epistate_ll(read_data)
