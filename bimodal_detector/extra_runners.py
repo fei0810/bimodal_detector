@@ -39,7 +39,7 @@ class OneStepRunner(ParamEstimator):
             pass
 
     def write_header(self):
-        columns = ["chrom", "start", "end", "CpG_start", "CpG_end", "BIC", "stateA","stateB",
+        columns = ["chrom", "start", "end", "CpG_start", "CpG_end", "n_CpG", "BIC", "stateA","stateB",
                    "n_reads", "state A reads", "state B reads", "reads > 0.5", "mean_pp", "stdev"]
         with open(os.path.join(self.outdir, str(self.name) + "_EM_header.txt"), "a+") as outfile:
             outfile.write("\t".join(columns)+"\n")
@@ -54,6 +54,7 @@ class OneStepRunner(ParamEstimator):
         chrom = []
         interval_start, interval_end = [], [] #input region
         win_start, win_end = [], [] #if walk on region
+        cpgs = []
         bics = []
         stateA, stateB = [], []
         stats = []
@@ -64,6 +65,7 @@ class OneStepRunner(ParamEstimator):
                 interval_start.extend([interval.start]*n_windows)
                 interval_end.extend([interval.end]*n_windows)
                 bics.extend(self.results[i]["BIC"])
+                cpgs.extend([len(x) for x in self.results[i]["Theta_A"]])
                 stateA.extend([format_array(x) for x in self.results[i]["Theta_A"]])
                 stateB.extend([format_array(x) for x in self.results[i]["Theta_B"]])
 
@@ -85,6 +87,7 @@ class OneStepRunner(ParamEstimator):
         combined_win_start = np.hstack(win_start)
         combined_win_end = np.hstack(win_end)
         combined_bics = np.hstack(bics)
+        combined_cpgs = np.hstack(cpgs)
 
         # Combine stateA and stateB separately since they may have different lengths
         combined_stateA = np.hstack(stateA)
@@ -95,7 +98,7 @@ class OneStepRunner(ParamEstimator):
 
         # Column stack the combined variables
         output_array = np.column_stack((combined_chrom.astype(str), combined_interval_start.astype(int), combined_interval_end.astype(int),
-                                        combined_win_start.astype(int), combined_win_end.astype(int), combined_bics.astype(float), combined_stateA.astype(str),
+                                        combined_win_start.astype(int), combined_win_end.astype(int),combined_cpgs.astype(int), combined_bics.astype(float), combined_stateA.astype(str),
                                         combined_stateB.astype(str), combined_stats.astype(str)))
 
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_EM_results.tsv.gz"), "a+") as outfile:
