@@ -40,6 +40,7 @@ class OneStepRunner(ParamEstimator):
 
     def write_header(self):
         columns = ["chrom", "start", "end", "CpG_start", "CpG_end", "n_CpG", "BIC", "stateA","stateB",
+                    "median_cpg", "prop_single",
                    "n_reads", "state A reads", "state B reads", "reads > 0.5", "mean_pp", "stdev"]
         with open(os.path.join(self.outdir, str(self.name) + "_EM_header.txt"), "a+") as outfile:
             outfile.write("\t".join(columns)+"\n")
@@ -57,6 +58,7 @@ class OneStepRunner(ParamEstimator):
         cpgs = []
         bics = []
         stateA, stateB = [], []
+        median_cpg, prop_single = [], []
         stats = []
         for i, interval in enumerate(self.interval_order):
             if "windows" in self.results[i] and self.results[i]["windows"]: #any results
@@ -68,6 +70,8 @@ class OneStepRunner(ParamEstimator):
                 cpgs.extend([len(x) for x in self.results[i]["Theta_A"]])
                 stateA.extend([format_array(x) for x in self.results[i]["Theta_A"]])
                 stateB.extend([format_array(x) for x in self.results[i]["Theta_B"]])
+                median_cpg.extend(self.results[i]["median_cpg"])
+                prop_single.extend(self.results[i]["percent_single"])
 
                 for j, (x, y) in enumerate(self.results[i]["windows"]):
                     win_start.append(self.cpgs[i][x])
@@ -88,6 +92,8 @@ class OneStepRunner(ParamEstimator):
         combined_win_end = np.hstack(win_end)
         combined_bics = np.hstack(bics)
         combined_cpgs = np.hstack(cpgs)
+        combined_median = np.hstack(median_cpg)
+        combined_single = np.hstack(prop_single)
 
         # Combine stateA and stateB separately since they may have different lengths
         combined_stateA = np.hstack(stateA)
@@ -99,7 +105,9 @@ class OneStepRunner(ParamEstimator):
         # Column stack the combined variables
         output_array = np.column_stack((combined_chrom.astype(str), combined_interval_start.astype(int), combined_interval_end.astype(int),
                                         combined_win_start.astype(int), combined_win_end.astype(int),combined_cpgs.astype(int), combined_bics.astype(float), combined_stateA.astype(str),
-                                        combined_stateB.astype(str), combined_stats.astype(str)))
+                                        combined_stateB.astype(str),
+                                        combined_median.astype(float), combined_single.astype(float),
+                                        combined_stats.astype(str)))
 
         with gzip.open(os.path.join(self.outdir, str(self.name) + "_EM_results.tsv.gz"), "a+") as outfile:
             np.savetxt(outfile, output_array, delimiter=TAB, fmt="%s")
