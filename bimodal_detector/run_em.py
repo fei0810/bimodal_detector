@@ -211,7 +211,7 @@ def get_source_stats(source_probs):
     '''
     stats = np.array([len(source_probs), np.sum(source_probs>upper_conf_thresh),
              np.sum(source_probs < lower_conf_thresh),np.sum(source_probs>0.5),
-            "{:.2f}".format(np.mean(source_probs)),"{:.2f}".format(np.std(source_probs))])
+            "{:.2f}".format(np.nanmean(source_probs)),"{:.2f}".format(np.nanstd(source_probs))])
 
     return stats
 

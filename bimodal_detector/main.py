@@ -34,3 +34,24 @@ def main(ctx, **kwargs):
 
 if __name__ == '__main__':
     main()
+# with open("/Users/ireneu/berman_lab/Results/rrbs/rrbs_config.json") as infile:
+#     config = json.load(infile)
+# cell_types = ['Adipocytes', 'Colon-Fibro', 'Heart-Fibro', 'Dermal-Fibro', 'Skeletal-Musc', 'Heart-Cardio', 'Bone-Osteob', 'Oligodend',
+#               'Pancreas-Duct', 'Pancreas-Acinar', 'Pancreas-Delta', 'Pancreas-Beta', 'Pancreas-Alpha', 'Thyroid-Ep',
+#               'Fallopian-Ep', 'Ovary+Endom-Ep', 'Eryth-prog', 'Blood-NK', 'Blood-Granul', 'Blood-B', 'Epid-Kerat',
+#            'Lung-Ep-Bron', 'Prostate-Ep', 'Bladder-Ep', 'Breast-Luminal-Ep', 'Breast-Basal-Ep', 'Lung-Ep-Alveo', 'Gallbladder']
+#
+# atlas_dir = "/Users/ireneu/berman_lab/Results/rrbs/atlas_pat/"
+# epiread_files = [atlas_dir +f+"_atlas_epipaths.epiread.gz" for f in cell_types]
+# basic_config = {"genomic_intervals": ["chr1:11594:11600","chr1:12884-12892"],
+#                 "cpg_coordinates": "/Users/ireneu/PycharmProjects/deconvolution_models/tests/data/hg19_pat_cpg.bed.gz",
+#                 "cell_types": cell_types,
+#                 "epiread_files": epiread_files,
+#                 "labels": cell_types,
+#                 "outdir": "results", "name": config["name"],
+#                 "epiformat": config["epiformat"], "header": False, "bedfile": False, "parse_snps": False,
+#                 "get_pp": False, "walk_on_list": False, "verbose": False}
+# runner = AtlasEstimator(basic_config)
+# runner.run()
+#
+
